@@ -459,6 +459,25 @@ export default function UploadedDocumentsView({
     setShowFilters(false);
   };
 
+  const clearAllFilters = () => {
+    setActiveGroup('All');
+    setDocumentFilter('');
+    setDateFilter('30');
+    setOrganizationFilter('');
+    setStatusFilter('');
+    setSourceTypeFilter('');
+    setSourceValueFilter('');
+    setVisibleFilterKeys([]);
+    setPendingFilterKeys([]);
+    setSelectedFilterKeys([]);
+    setShowFilters(false);
+    setOpenFilter(null);
+    setSearchSuggestionsOpen(false);
+    setHighlightedSuggestion(0);
+    setShowAll(false);
+    setPage(1);
+  };
+
   const originalForDuplicate = selectedDocument && uploadedStatus(selectedDocument) === 'Duplicate'
     ? documents.find((document) => document.id !== selectedDocument.id && (
         (selectedDocument.number && document.number === selectedDocument.number) ||
@@ -547,7 +566,7 @@ export default function UploadedDocumentsView({
               )}
             </div>
           <div className="flex flex-nowrap items-center gap-1" role="tablist" aria-label="Uploaded document groups">
-            {(['All', 'Processing', 'Needs attention', 'Processed'] as StatusGroup[]).map((group) => (
+            {(['Processing', 'Needs attention', 'Processed'] as StatusGroup[]).map((group) => (
               <button
                 key={group}
                 type="button"
@@ -677,6 +696,14 @@ export default function UploadedDocumentsView({
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="flex h-7 flex-shrink-0 items-center gap-1 rounded bg-[#E5EDF9] px-2 py-[5px] font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3] hover:bg-[#DCE7F6]"
+          >
+            <X size={15} />
+            Clear filters
+          </button>
           </div>
         </div>
 
