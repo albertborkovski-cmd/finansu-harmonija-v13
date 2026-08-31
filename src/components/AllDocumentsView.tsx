@@ -1308,6 +1308,22 @@ export default function AllDocumentsView({
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setActiveFilterKeys([]);
+              setPendingAddedFilterKeys([]);
+              (Object.keys(filterBindings) as ColumnKey[]).forEach((key) =>
+                filterBindings[key].onChange(""),
+              );
+              setAddFilterOpen(false);
+            }}
+            className="flex h-7 flex-shrink-0 items-center gap-1 whitespace-nowrap rounded bg-[#E5EDF9] px-2 py-[5px] font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3] hover:bg-[#DCE7F6]"
+          >
+            <X size={15} />
+            <span>Clear filters</span>
+          </button>
         </div>
         <div className="ml-auto flex h-7 flex-row items-center gap-4 rounded bg-white">
           <ColumnSettingsButton onClick={() => setShowColumns(true)} />

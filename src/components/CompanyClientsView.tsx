@@ -263,18 +263,11 @@ export default function CompanyClientsView({ company }: { company: Company }) {
               setFilterValues(values);
               setCurrentPage(1);
             }}
-          />
-          <button
-            type="button"
-            onClick={() => {
+            onClearFilters={() => {
               setQuery("");
-              setFilterValues({});
               setCurrentPage(1);
             }}
-            className="flex h-7 items-center rounded px-2 font-montserrat text-[12px] font-semibold text-[#7288A3] hover:bg-[#F0F7FA]"
-          >
-            Clear filters
-          </button>
+          />
           <button
             type="button"
             onClick={startCreate}

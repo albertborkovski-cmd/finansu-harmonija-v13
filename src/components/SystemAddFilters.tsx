@@ -16,6 +16,7 @@ export default function SystemAddFilters({
   showActiveFilters = true,
   persistenceKey,
   legacyDefaultKeys,
+  onClearFilters,
 }: {
   columns: SystemFilterColumn[];
   activeKeys: string[];
@@ -25,6 +26,7 @@ export default function SystemAddFilters({
   showActiveFilters?: boolean;
   persistenceKey?: string;
   legacyDefaultKeys?: string[];
+  onClearFilters?: () => void;
 }) {
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -129,6 +131,15 @@ export default function SystemAddFilters({
     onValuesChange(nextValues);
     onActiveKeysChange(draftKeys);
     setAddOpen(false);
+  };
+
+  const clearAllFilters = () => {
+    onValuesChange({});
+    onActiveKeysChange([]);
+    setDraftKeys([]);
+    setAddOpen(false);
+    setOpenFilter(null);
+    onClearFilters?.();
   };
 
   return (
@@ -286,6 +297,14 @@ export default function SystemAddFilters({
           </div>
         )}
       </div>
+      <button
+        type="button"
+        onClick={clearAllFilters}
+        className="flex h-7 flex-shrink-0 items-center gap-1 whitespace-nowrap rounded bg-[#E5EDF9] px-2 py-[5px] font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3] hover:bg-[#DCE7F6]"
+      >
+        <X size={15} />
+        <span>Clear filters</span>
+      </button>
     </div>
   );
 }

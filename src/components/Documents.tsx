@@ -2559,6 +2559,32 @@ export default function Documents({
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              setActivePrimaryFilterKeys([]);
+              setDynamicFilters({});
+              setPendingDynamicFilterKeys([]);
+              setSelectedPeriod(null);
+              setSelectedCounterparty(null);
+              setSelectedCurrency(null);
+              setSelectedStatus(null);
+              setRangeAmountMin("");
+              setRangeAmountMax("");
+              setAppliedRangeMin(null);
+              setAppliedRangeMax(null);
+              setShowAddFilterMenu(false);
+              setOpenDynamicMenu(null);
+              setShowRangeAmountMenu(false);
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+            }}
+            className="flex h-7 flex-shrink-0 items-center gap-1 whitespace-nowrap rounded bg-[#E5EDF9] px-2 py-[5px] font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3] hover:bg-[#DCE7F6]"
+          >
+            <X size={15} />
+            <span>Clear filters</span>
+          </button>
         </div>
         <div className="ml-auto flex h-7 flex-row items-center gap-4 rounded bg-white">
           <ColumnSettingsButton onClick={() => setShowColumnPanel((v) => !v)} />
