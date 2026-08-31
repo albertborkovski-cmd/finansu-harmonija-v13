@@ -6,6 +6,7 @@ import type { AccessMap } from '../lib/accessControl';
 import { PageHeader } from './PageHeader';
 import CompanyBreadcrumb from './CompanyBreadcrumb';
 import { SystemBreadcrumb } from './SystemNavigation';
+import type { UploadedDocumentsGroup } from './UploadedDocumentsView';
 
 type OcrAdditionalInformation = {
   departmentCode: string;
@@ -368,6 +369,7 @@ export default function DashboardView({
   clientName,
   allCompanies = false,
   onOpenDocument,
+  onOpenUploadedDocuments,
 }: {
   companyId?: string;
   clientName?: string;
@@ -375,6 +377,7 @@ export default function DashboardView({
   roleNames?: string[];
   access?: AccessMap;
   onOpenDocument?: (document: DbDocument) => void;
+  onOpenUploadedDocuments?: (group: UploadedDocumentsGroup) => void;
 }) {
   const [activeMonth, setActiveMonth] = useState('Jan');
   const [activeYear3, setActiveYear3] = useState('2025');
@@ -402,6 +405,21 @@ export default function DashboardView({
   );
   const [additionalInformationDraft, setAdditionalInformationDraft] = useState<OcrAdditionalInformation>(additionalInformation);
   const [showAdditionalInformation, setShowAdditionalInformation] = useState(false);
+
+  const openAnalyticsDocuments = (selection: DashboardAnalyticsSelection) => {
+    const uploadedGroup: UploadedDocumentsGroup = selection === 'processing'
+      ? 'Processing'
+      : selection === 'processed'
+        ? 'Processed'
+        : selection === 'attention'
+          ? 'Needs attention'
+          : 'All';
+    if (onOpenUploadedDocuments) {
+      onOpenUploadedDocuments(uploadedGroup);
+      return;
+    }
+    setSelectedAnalyticsCategory(selection);
+  };
 
   const updateAdditionalInformationDraft = <K extends keyof OcrAdditionalInformation,>(
     key: K,
@@ -997,7 +1015,7 @@ export default function DashboardView({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setSelectedAnalyticsCategory(item.key)}
+                      onClick={() => openAnalyticsDocuments(item.key)}
                       className="mt-5 flex h-10 w-full items-center justify-between gap-2 border-t border-[#E1EBF2] pt-3 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
                     >
                       View all documents
@@ -1018,7 +1036,7 @@ export default function DashboardView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedAnalyticsCategory('all')}
+                  onClick={() => openAnalyticsDocuments('all')}
                   className="flex h-8 items-center gap-2 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
                 >
                   View all documents

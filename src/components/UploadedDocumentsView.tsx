@@ -20,7 +20,8 @@ type UploadedStatus =
   | 'Duplicate'
   | 'Not document';
 
-type StatusGroup = 'All' | 'Processing' | 'Needs attention' | 'Processed';
+export type UploadedDocumentsGroup = 'All' | 'Processing' | 'Needs attention' | 'Processed';
+type StatusGroup = UploadedDocumentsGroup;
 type UploadedFilterKey = 'uploaded' | 'organization' | 'status' | 'sourceType' | 'sourceValue';
 
 const PAGE_SIZE = 50;
@@ -160,13 +161,15 @@ function isUnresolved(status: UploadedStatus) {
 
 export default function UploadedDocumentsView({
   onOpenDocument,
+  initialGroup = 'All',
 }: {
   onOpenDocument: (document: DbDocument) => void | Promise<void>;
+  initialGroup?: UploadedDocumentsGroup;
 }) {
   const [documents, setDocuments] = useState<DbDocument[]>([]);
   const [organizations, setOrganizations] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeGroup, setActiveGroup] = useState<StatusGroup>('All');
+  const [activeGroup, setActiveGroup] = useState<StatusGroup>(initialGroup);
   const [showFilters, setShowFilters] = useState(false);
   const [openFilter, setOpenFilter] = useState<UploadedFilterKey | null>(null);
   const [visibleFilterKeys, setVisibleFilterKeys] = useState<UploadedFilterKey[]>([]);
@@ -236,6 +239,11 @@ export default function UploadedDocumentsView({
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    setActiveGroup(initialGroup);
+    setPage(1);
+  }, [initialGroup]);
 
   useEffect(() => {
     if (!showFilters && openFilter === null && !searchSuggestionsOpen) return;

@@ -9,7 +9,7 @@ import ProfileSettings from "./ProfileSettings";
 import Companies from "./Companies";
 import CompanyDetail from "./CompanyDetail";
 import DashboardView from "./DashboardView";
-import UploadedDocumentsView from "./UploadedDocumentsView";
+import UploadedDocumentsView, { type UploadedDocumentsGroup } from "./UploadedDocumentsView";
 import OcrView from "./OcrView";
 import AllDocumentsView from "./AllDocumentsView";
 import OcrProcessedDocumentsView from "./OcrProcessedDocumentsView";
@@ -116,6 +116,8 @@ function ReadOnlyBoundary({
 export default function Dashboard({ onLogout, session }: DashboardProps) {
   const [isMenuExpanded, setIsMenuExpanded] = useState(true);
   const [activeMenu, setActiveMenu] = useState(() => firstAccessibleMenu(session));
+  const [uploadedDocumentsGroup, setUploadedDocumentsGroup] =
+    useState<UploadedDocumentsGroup>("All");
   const [userProfile, setUserProfile] = usePersistentState(
     userProfileStorageKey(session.email),
     {
@@ -253,6 +255,7 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
           ].find((candidate) => canViewMenu(session, candidate)) ?? "profile"
         : menu;
     if (menu === "messages") setSelectedChat(null);
+    if (targetMenu === "uploaded-documents") setUploadedDocumentsGroup("All");
     setAutomationProcessFromNode(null);
     setAutomationRunIdFromNode(null);
     setSecurityAccessTarget(null);
@@ -458,10 +461,19 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
           roleNames={session.roleNames}
           access={session.access}
           onOpenDocument={openDocumentInOrganization}
+          onOpenUploadedDocuments={(group) => {
+            setUploadedDocumentsGroup(group);
+            setActiveMenu("uploaded-documents");
+          }}
         />
       );
     if (activeMenu === "uploaded-documents")
-      return <UploadedDocumentsView onOpenDocument={openDocumentInOrganization} />;
+      return (
+        <UploadedDocumentsView
+          initialGroup={uploadedDocumentsGroup}
+          onOpenDocument={openDocumentInOrganization}
+        />
+      );
     if (activeMenu === "messages")
       return <ChatsView currentUserName={currentUserName} conversation={selectedChat} />;
     if (activeMenu === "notifications") return <NotificationsView />;
