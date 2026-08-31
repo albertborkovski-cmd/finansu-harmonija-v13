@@ -4,6 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The application provides its own password visibility control. Microsoft
+ * Edge also injects a native reveal button into password inputs, which would
+ * otherwise display a second eye beside the system icon. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 /* Document and invoice previews keep the same information hierarchy as the
  * editable copy form, but values read as document text rather than disabled
  * form controls. */
