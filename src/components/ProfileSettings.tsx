@@ -1097,20 +1097,6 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
                   </label>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 rounded-lg border border-[#E3ECF3] bg-[#F8FAFC] p-4">
-                <div className="w-24 h-16 rounded-lg bg-white border border-[#D3E1EC] overflow-hidden flex items-center justify-center shrink-0">
-                  {internalUser.organizationLogo ? <img src={internalUser.organizationLogo} alt="Company logo" className="max-w-full max-h-full object-contain p-2" /> : <Building2 size={26} className="text-[#8CA1B7]" />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-[#10233A]">Company logo</p>
-                  <p className="text-xs text-[#879BB1] mt-0.5">Used in reports and documents.</p>
-                  <label className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-main-blue cursor-pointer hover:text-[#006F91]">
-                    <Upload size={16} /> Upload logo
-                    <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={event => handleImageUpload('organizationLogo', event.target.files?.[0])} />
-                  </label>
-                </div>
-              </div>
             </div>
           </div>
         </div>
