@@ -346,6 +346,13 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
     profileImage: '',
     organizationLogo: '',
   });
+  const [integrationDraft, setIntegrationDraft] = useState(() => ({
+    sodraUser: internalUser.sodraUser,
+    sodraPassword: internalUser.sodraPassword,
+    edsUser: internalUser.edsUser,
+    edsPassword: internalUser.edsPassword,
+  }));
+  const [integrationSaved, setIntegrationSaved] = useState(false);
   const [profileAudience, setProfileAudience] = useState<SettingsAudience>(() =>
     loadLinkedDirectoryUsers('Internal users').some(
       directoryUser => isDirectoryEmailMatch(directoryUser.email, normalizedUserEmail),
@@ -591,6 +598,18 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
     // Hide success message after 3 seconds
     setTimeout(() => setPasswordSaved(false), 3000);
   };
+
+  const handleSaveIntegrations = () => {
+    setInternalUser(current => ({ ...current, ...integrationDraft }));
+    setIntegrationSaved(true);
+    setTimeout(() => setIntegrationSaved(false), 3000);
+  };
+
+  const hasIntegrationChanges =
+    integrationDraft.sodraUser !== internalUser.sodraUser ||
+    integrationDraft.sodraPassword !== internalUser.sodraPassword ||
+    integrationDraft.edsUser !== internalUser.edsUser ||
+    integrationDraft.edsPassword !== internalUser.edsPassword;
 
   // Handle notification toggle - show confirmation when trying to disable
   const handleReportNotificationsToggle = () => {
@@ -865,6 +884,12 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
           <span className="text-sm text-green-700">Password changed successfully</span>
         </div>
       )}
+      {integrationSaved && (
+        <div className="w-fit px-4 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+          <Check size={16} className="text-green-600" />
+          <span className="text-sm text-green-700">Integration settings saved successfully</span>
+        </div>
+      )}
 
       {/* Settings cards */}
       <div
@@ -993,8 +1018,8 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[#10233A]">SODRA username</label>
                 <input
-                  value={internalUser.sodraUser}
-                  onChange={event => setInternalUser(current => ({ ...current, sodraUser: event.target.value }))}
+                  value={integrationDraft.sodraUser}
+                  onChange={event => setIntegrationDraft(current => ({ ...current, sodraUser: event.target.value }))}
                   placeholder="Enter SODRA username"
                   className={inputClass}
                 />
@@ -1004,8 +1029,8 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
                 <div className="relative">
                   <input
                     type={showSodraPassword ? 'text' : 'password'}
-                    value={internalUser.sodraPassword}
-                    onChange={event => setInternalUser(current => ({ ...current, sodraPassword: event.target.value }))}
+                    value={integrationDraft.sodraPassword}
+                    onChange={event => setIntegrationDraft(current => ({ ...current, sodraPassword: event.target.value }))}
                     placeholder="Enter SODRA password"
                     className={`${inputClass} pr-11`}
                   />
@@ -1017,8 +1042,8 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[#10233A]">VMI (EDS) username</label>
                 <input
-                  value={internalUser.edsUser}
-                  onChange={event => setInternalUser(current => ({ ...current, edsUser: event.target.value }))}
+                  value={integrationDraft.edsUser}
+                  onChange={event => setIntegrationDraft(current => ({ ...current, edsUser: event.target.value }))}
                   placeholder="Enter VMI (EDS) username"
                   className={inputClass}
                 />
@@ -1028,8 +1053,8 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
                 <div className="relative">
                   <input
                     type={showEdsPassword ? 'text' : 'password'}
-                    value={internalUser.edsPassword}
-                    onChange={event => setInternalUser(current => ({ ...current, edsPassword: event.target.value }))}
+                    value={integrationDraft.edsPassword}
+                    onChange={event => setIntegrationDraft(current => ({ ...current, edsPassword: event.target.value }))}
                     placeholder="Enter VMI (EDS) password"
                     className={`${inputClass} pr-11`}
                   />
@@ -1039,6 +1064,14 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
                 </div>
               </div>
             </div>
+
+            <SaveButton
+              onClick={handleSaveIntegrations}
+              disabled={!hasIntegrationChanges}
+              className="w-full"
+            >
+              Save
+            </SaveButton>
           </div>
         </div>
 
