@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Info, Copy, RefreshCw, CheckCircle, AlertCircle, Upload, BarChart2, LineChart, PieChart, Settings, X, Check, ArrowRight, FileText } from 'lucide-react';
+import { Info, Copy, RefreshCw, CheckCircle, AlertCircle, Upload, BarChart2, LineChart, PieChart, Settings, X, Check, FileText } from 'lucide-react';
 import { supabase, type Company, type DbDocument } from '../lib/supabase';
 import { usePersistentState } from '../hooks/usePersistentState';
 import type { AccessMap } from '../lib/accessControl';
@@ -1016,10 +1016,9 @@ export default function DashboardView({
                     <button
                       type="button"
                       onClick={() => openAnalyticsDocuments(item.key)}
-                      className="mt-5 flex h-10 w-full items-center justify-between gap-2 border-t border-[#E1EBF2] pt-3 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
+                      className="mt-5 flex h-10 w-full items-center gap-2 border-t border-[#E1EBF2] pt-3 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
                     >
                       View all documents
-                      <ArrowRight size={16} />
                     </button>
                     <span
                       aria-hidden="true"
@@ -1040,7 +1039,6 @@ export default function DashboardView({
                   className="flex h-8 items-center gap-2 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
                 >
                   View all documents
-                  <ArrowRight size={16} />
                 </button>
               </div>
             </section>
