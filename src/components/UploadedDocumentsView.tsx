@@ -65,14 +65,26 @@ function displayUploadedDate(document: DbDocument) {
   }).format(new Date(timestamp));
 }
 
-function statusReason(document: DbDocument, status: UploadedStatus) {
-  if (status === 'Processed') return 'Initial processing completed and sent to Organization Documents.';
-  if (status === 'Organization not identified') return 'The organization could not be identified during intake.';
-  if (status === 'Duplicate') return 'A matching document already exists.';
-  if (status === 'Rejected') return document.valid_form || 'The document failed intake validation.';
-  if (status === 'Exception') return document.valid_form || 'OCR or integration processing requires review.';
-  if (status === 'Not document') return 'The uploaded file was not recognized as a document.';
-  return 'OCR extraction, analysis or validation is in progress.';
+function statusReason(_document: DbDocument, status: UploadedStatus) {
+  if (status === 'Processed') {
+    return 'Initial processing is complete; this does not mean accounting approval.';
+  }
+  if (status === 'Organization not identified') {
+    return 'This is the only data assignment action allowed in this view.';
+  }
+  if (status === 'Duplicate') {
+    return 'A link to the existing document record is available.';
+  }
+  if (status === 'Rejected') {
+    return 'The reason is displayed below the status in smaller text.';
+  }
+  if (status === 'Exception') {
+    return 'A processing error or exception occurred.';
+  }
+  if (status === 'Not document') {
+    return 'The file was identified as not being a document.';
+  }
+  return 'The document has been received and OCR, analysis, or organization identification is in progress.';
 }
 
 function sourceValue(document: DbDocument) {
