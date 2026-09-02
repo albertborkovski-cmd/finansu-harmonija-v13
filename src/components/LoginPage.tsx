@@ -101,7 +101,7 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
   return (
     <div className="flex min-h-screen flex-col bg-[#FCFCFD] px-8 pb-4 pt-8">
       <main className="flex w-full flex-1 items-center justify-center">
-        <form className="flex w-[368px] max-w-full flex-col items-center gap-12" onSubmit={handleSubmit}>
+        <form className="w-full max-w-[368px] flex flex-col items-center gap-12" onSubmit={handleSubmit}>
         {/* Logo */}
         <img
           src={`${import.meta.env.BASE_URL}image.png`}
@@ -111,12 +111,12 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
         />
 
         {/* Login Card */}
-        <div className="w-full flex flex-col gap-6">
+        <div className="flex w-[340px] max-w-full flex-col gap-6">
           {/* Form Container */}
           <div className="bg-white border border-border-grey rounded-lg p-6 flex flex-col gap-8">
-            <div className="flex flex-col items-end gap-6">
+            <div className="flex flex-col items-end gap-0">
               {/* Email Input */}
-              <div className="w-full flex flex-col gap-2">
+              <div className="w-full flex flex-col gap-1">
                 <label htmlFor="email" className="text-sm font-semibold text-grey-500">
                   Email
                 </label>
@@ -151,7 +151,7 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
               </div>
 
               {/* Password Input */}
-              <div className="w-full flex flex-col gap-2 relative">
+              <div className="relative flex w-full flex-col gap-1">
                 <label htmlFor="password" className="text-sm font-semibold text-grey-500">
                   Password
                 </label>
