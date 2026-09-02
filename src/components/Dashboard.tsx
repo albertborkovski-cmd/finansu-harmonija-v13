@@ -235,6 +235,70 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
   }, []);
 
   useEffect(() => {
+    let interceptingMouseBack = false;
+    let resetTimer: number | undefined;
+
+    const visibleBackButton = () => {
+      const candidates = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("button"),
+      )
+        .filter((button) => {
+          if (button.disabled) return false;
+          const action = `${button.textContent ?? ""} ${
+            button.getAttribute("aria-label") ?? ""
+          } ${button.title}`.trim();
+          if (!/\bback\b/i.test(action)) return false;
+          const bounds = button.getBoundingClientRect();
+          const style = window.getComputedStyle(button);
+          return (
+            bounds.width > 0 &&
+            bounds.height > 0 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden"
+          );
+        })
+        .sort((first, second) => {
+          const firstBounds = first.getBoundingClientRect();
+          const secondBounds = second.getBoundingClientRect();
+          return secondBounds.left - firstBounds.left || firstBounds.top - secondBounds.top;
+        });
+
+      return candidates[0];
+    };
+
+    const handleMouseBack = (event: MouseEvent) => {
+      if (event.button !== 3) return;
+
+      const backButton = visibleBackButton();
+      if (!backButton && !interceptingMouseBack) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!interceptingMouseBack && backButton) {
+        interceptingMouseBack = true;
+        backButton.click();
+      }
+
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(() => {
+        interceptingMouseBack = false;
+      }, 250);
+    };
+
+    window.addEventListener("mousedown", handleMouseBack, true);
+    window.addEventListener("mouseup", handleMouseBack, true);
+    window.addEventListener("auxclick", handleMouseBack, true);
+
+    return () => {
+      window.clearTimeout(resetTimer);
+      window.removeEventListener("mousedown", handleMouseBack, true);
+      window.removeEventListener("mouseup", handleMouseBack, true);
+      window.removeEventListener("auxclick", handleMouseBack, true);
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeMenu === "profile" || canViewMenu(session, activeMenu)) return;
     setActiveMenu(firstAccessibleMenu(session));
   }, [activeMenu, session]);
