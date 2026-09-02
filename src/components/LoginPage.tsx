@@ -48,10 +48,10 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
       return 'Password must be at least 6 characters';
     }
     if (!/[A-Z]/.test(password)) {
-      return 'Password must contain at least one uppercase letter';
+      return 'Include at least one uppercase letter';
     }
     if (!/[^A-Za-z0-9\s]/.test(password)) {
-      return 'Password must contain at least one special character, e.g. _)(!';
+      return 'Include at least one special character, e.g. _)(!';
     }
     return '';
   };
@@ -111,12 +111,12 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
         />
 
         {/* Login Card */}
-        <div className="flex w-[340px] max-w-full flex-col gap-6">
+        <div className="flex w-[368px] max-w-full flex-col gap-6">
           {/* Form Container */}
-          <div className="bg-white border border-border-grey rounded-lg p-6 flex flex-col gap-8">
-            <div className="flex flex-col items-end gap-0">
+          <div className="flex h-[336px] flex-col gap-8 rounded-lg bg-white p-6 ring-1 ring-inset ring-[#D3E1EC]">
+            <div className="flex h-[208px] flex-col items-end gap-6">
               {/* Email Input */}
-              <div className="w-full flex flex-col gap-1">
+              <div className="relative flex h-[70px] w-full flex-col gap-2">
                 <label htmlFor="email" className="text-sm font-semibold text-grey-500">
                   Email
                 </label>
@@ -142,7 +142,7 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
                 </div>
                 <p
                   aria-live="polite"
-                  className={`flex h-[18px] items-center gap-1 text-xs leading-[18px] text-red-500 ${
+                  className={`absolute left-0 top-[72px] flex h-[18px] items-center gap-1 text-xs leading-[18px] text-red-500 ${
                     errors.email && touched.email ? 'visible' : 'invisible'
                   }`}
                 >
@@ -151,7 +151,7 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
               </div>
 
               {/* Password Input */}
-              <div className="relative flex w-full flex-col gap-1">
+              <div className="relative flex h-[70px] w-full flex-col gap-2">
                 <label htmlFor="password" className="text-sm font-semibold text-grey-500">
                   Password
                 </label>
@@ -184,7 +184,7 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
                 </div>
                 <p
                   aria-live="polite"
-                  className={`flex h-9 items-start gap-1 text-xs leading-[18px] text-red-500 ${
+                  className={`absolute left-0 top-[72px] flex h-[18px] items-start gap-1 text-xs leading-[18px] text-red-500 ${
                     errors.password && touched.password ? 'visible' : 'invisible'
                   }`}
                 >
