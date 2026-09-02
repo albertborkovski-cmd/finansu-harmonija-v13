@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { supabase, type Company } from '../lib/supabase';
 import { usePersistentState } from '../hooks/usePersistentState';
 import ColumnSortButton, { useColumnSort } from './ColumnSortButton';
 import CompanyBreadcrumb from './CompanyBreadcrumb';
+import SearchableSelect from './SearchableSelect';
 
 interface CompanyDebtsProps {
   company: Company;
@@ -570,17 +571,7 @@ function SelectField({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="relative">
-      <select
-        aria-label={ariaLabel}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-[58px] w-full appearance-none rounded-xl border border-[#D3E1EC] bg-white px-4 pr-12 font-montserrat text-[18px] text-[#10233A] outline-none transition-colors focus:border-[#007EA7]"
-      >
-        {options.map(option => <option key={option} value={option}>{option}</option>)}
-      </select>
-      <ChevronDown size={20} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-    </div>
+    <SearchableSelect ariaLabel={ariaLabel} value={value} options={options} onChange={onChange} className="h-[58px] rounded-xl border border-[#D3E1EC] bg-white px-4 pr-12 font-montserrat text-[18px] text-[#10233A]" />
   );
 }
 

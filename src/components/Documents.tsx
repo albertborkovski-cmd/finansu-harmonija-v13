@@ -37,6 +37,7 @@ import { getCurrentUserName } from "../lib/currentUser";
 import { importMenuRecords } from "../lib/menuImport";
 import { loadCompanyGeneralLedgerAccountOptions } from "./GeneralLedgerView";
 import GeneralLedgerAccountSelect from "./GeneralLedgerAccountSelect";
+import SearchableSelect from "./SearchableSelect";
 import SendInvoicePanel from "./invoices/SendInvoicePanel";
 import { InvoicePaymentPreviewPanel } from "./invoices/CreateInvoicePanel";
 import type { InvoiceChatContext } from "./invoices/invoiceChat";
@@ -976,6 +977,7 @@ function LookupCellDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
   const [newVal, setNewVal] = useState("");
   const [saving, setSaving] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -985,6 +987,9 @@ function LookupCellDropdown({
     ["department_code", "cost_center", "object_project", "product_group", "series"].includes(lookupType) && companyId
       ? `${lookupType}::company::${companyId}`
       : lookupType;
+  const filteredOptions = options.filter((option) =>
+    option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -1063,6 +1068,7 @@ function LookupCellDropdown({
     }
     await onSave(docId, colKey, val);
     setOpen(false);
+    setQuery("");
     setSaving(false);
   }
 
@@ -1110,35 +1116,32 @@ function LookupCellDropdown({
       style={{ width }}
       onClick={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
+      <input
+        role="combobox"
         disabled={disabled}
         aria-label={`Select ${colKey}`}
         aria-expanded={open}
-        onClick={() => {
+        value={open ? query : value}
+        autoComplete="off"
+        onFocus={(event) => {
           if (disabled) return;
           if (!open && tableSelect) updateMenuPosition();
-          setOpen((current) => !current);
+          setQuery("");
+          setOpen(true);
+          event.currentTarget.select();
         }}
+        onClick={() => { if (!disabled) setOpen(true); }}
+        onChange={(event) => { setQuery(event.target.value); setOpen(true); }}
         className={
           tableSelect
-            ? `flex h-7 w-[calc(100%-8px)] items-center justify-between border border-transparent bg-transparent px-2 font-montserrat text-[11px] font-normal text-[#10233A] transition-colors ${disabled ? "cursor-not-allowed opacity-60" : "hover:text-[#007EA7]"}`
-            : "group/lcell flex w-full items-center justify-between gap-1"
+            ? `h-7 w-[calc(100%-8px)] border border-transparent bg-transparent px-2 pr-6 font-montserrat text-[11px] font-normal text-[#10233A] outline-none transition-colors ${disabled ? "cursor-not-allowed opacity-60" : "hover:text-[#007EA7]"}`
+            : "h-7 w-full bg-transparent pr-6 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A] outline-none"
         }
-      >
-        <span
-          className={`min-w-0 truncate ${tableSelect ? "" : "font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]"}`}
-        >
-          {value ||
-            (tableSelect ? (
-              <span aria-hidden="true">&nbsp;</span>
-            ) : (
-              <span className="text-[#A1B6C6]">—</span>
-            ))}
-        </span>
+      />
+      <button type="button" tabIndex={-1} disabled={disabled} aria-label={`Open ${colKey} options`} onMouseDown={(event) => event.preventDefault()} onClick={() => { if (!open && tableSelect) updateMenuPosition(); setQuery(""); setOpen((current) => !current); }} className={`absolute right-0 top-0 flex items-center justify-center text-[#7288A3] disabled:hidden ${tableSelect ? "h-7 w-6" : "h-7 w-5"}`}>
         <ChevronDown
           size={tableSelect ? 12 : 11}
-          className={`flex-shrink-0 text-[#7288A3] transition-transform ${tableSelect ? "opacity-100" : "opacity-0 group-hover/lcell:opacity-100"} ${open ? "rotate-180" : ""}`}
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && !disabled &&
@@ -1166,12 +1169,12 @@ function LookupCellDropdown({
                 <span>Clear value</span>
               </button>
             )}
-            {options.length === 0 && (
+            {filteredOptions.length === 0 && (
               <div className="px-3 py-2 text-[11px] text-[#A1B6C6] font-montserrat">
                 No options yet
               </div>
             )}
-            {options.map((opt) => (
+            {filteredOptions.map((opt) => (
               <button
                 key={opt}
                 type="button"
@@ -1232,12 +1235,12 @@ function LookupCellDropdown({
                 <span>Clear value</span>
               </button>
             )}
-            {options.length === 0 && (
+            {filteredOptions.length === 0 && (
               <div className="px-3 py-2 font-montserrat text-[11px] text-[#A1B6C6]">
                 No options yet
               </div>
             )}
-            {options.map((opt) => (
+            {filteredOptions.map((opt) => (
               <button
                 key={opt}
                 type="button"
@@ -3289,24 +3292,7 @@ export default function Documents({
                 <span className="font-montserrat font-semibold text-[14px] leading-[140%] text-[#10233A]">
                   File format type <span className="text-red-500">*</span>
                 </span>
-                <div className="relative">
-                  <select
-                    value={exportFormat}
-                    onChange={(e) => setExportFormat(e.target.value)}
-                    className="w-full h-[42px] px-[14px] bg-white border border-[#D3E1EC] rounded-lg appearance-none font-montserrat font-medium text-[14px] leading-[140%] text-[#A1B6C6] focus:outline-none focus:border-[#007EA7] transition-colors"
-                  >
-                    <option value="" disabled>
-                      Select format
-                    </option>
-                    <option value="csv">CSV</option>
-                    <option value="xlsx">XLSX</option>
-                    <option value="pdf">PDF</option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-[14px] top-1/2 -translate-y-1/2 text-[#7288A3] pointer-events-none"
-                  />
-                </div>
+                <SearchableSelect ariaLabel="File format type" value={exportFormat} onChange={setExportFormat} placeholder="Select format" options={[{ value: "csv", label: "CSV" }, { value: "xlsx", label: "XLSX" }, { value: "pdf", label: "PDF" }]} />
               </div>
             </div>
 

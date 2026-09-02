@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import SearchableSelect from "./SearchableSelect";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -85,12 +86,12 @@ export default function ScheduleDatePicker({
         >
           <div className="mb-4 flex items-center gap-2">
             <button type="button" aria-label="Previous month" onClick={() => setViewDate(new Date(year, month - 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-md border border-[#D3E1EC] text-[#7288A3] hover:border-[#007EA7] hover:text-[#007EA7]"><ChevronLeft size={16} /></button>
-            <select aria-label="Calendar month" value={month} onChange={(event) => setViewDate(new Date(year, Number(event.target.value), 1))} className="h-8 min-w-0 flex-1 rounded-md border border-[#D3E1EC] bg-white px-2 font-montserrat text-[12px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]">
-              {MONTH_NAMES.map((name, index) => <option key={name} value={index}>{name}</option>)}
-            </select>
-            <select aria-label="Calendar year" value={year} onChange={(event) => setViewDate(new Date(Number(event.target.value), month, 1))} className="h-8 w-[76px] rounded-md border border-[#D3E1EC] bg-white px-2 font-montserrat text-[12px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]">
-              {years.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
+            <div className="min-w-0 flex-1">
+              <SearchableSelect ariaLabel="Calendar month" value={String(month)} onChange={(nextMonth) => setViewDate(new Date(year, Number(nextMonth), 1))} options={MONTH_NAMES.map((name, index) => ({ value: String(index), label: name }))} className="h-8 rounded-md border border-[#D3E1EC] bg-white px-2 pr-7 font-montserrat text-[12px] font-medium text-[#10233A]" />
+            </div>
+            <div className="w-[76px] flex-shrink-0">
+              <SearchableSelect ariaLabel="Calendar year" value={String(year)} onChange={(nextYear) => setViewDate(new Date(Number(nextYear), month, 1))} options={years.map(String)} className="h-8 rounded-md border border-[#D3E1EC] bg-white px-2 pr-7 font-montserrat text-[12px] font-medium text-[#10233A]" />
+            </div>
             <button type="button" aria-label="Next month" onClick={() => setViewDate(new Date(year, month + 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-md border border-[#D3E1EC] text-[#7288A3] hover:border-[#007EA7] hover:text-[#007EA7]"><ChevronRight size={16} /></button>
           </div>
 

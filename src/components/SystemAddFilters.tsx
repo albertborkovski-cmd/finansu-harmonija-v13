@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Plus, X } from "lucide-react";
+import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
 
 export interface SystemFilterColumn {
   key: string;
@@ -31,6 +31,8 @@ export default function SystemAddFilters({
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [draftKeys, setDraftKeys] = useState<string[]>(activeKeys);
+  const [optionQuery, setOptionQuery] = useState("");
+  const [columnQuery, setColumnQuery] = useState("");
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const columnsRef = useRef(columns);
@@ -108,12 +110,16 @@ export default function SystemAddFilters({
       if (target instanceof Node && !filterMenuRef.current?.contains(target)) {
         setAddOpen(false);
         setOpenFilter(null);
+        setOptionQuery("");
+        setColumnQuery("");
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setAddOpen(false);
       setOpenFilter(null);
+      setOptionQuery("");
+      setColumnQuery("");
     };
     document.addEventListener("pointerdown", closeOutside);
     document.addEventListener("keydown", closeOnEscape);
@@ -139,6 +145,8 @@ export default function SystemAddFilters({
     setDraftKeys([]);
     setAddOpen(false);
     setOpenFilter(null);
+    setOptionQuery("");
+    setColumnQuery("");
     onClearFilters?.();
   };
 
@@ -159,6 +167,7 @@ export default function SystemAddFilters({
                 onClick={() => {
                   setOpenFilter(isOpen ? null : key);
                   setAddOpen(false);
+                  setOptionQuery("");
                 }}
                 className="flex h-7 max-w-[240px] items-center gap-1 rounded bg-[#E5EDF9] px-2 font-montserrat text-[12px] font-medium text-[#7288A3] hover:bg-[#DCE7F6]"
               >
@@ -189,6 +198,10 @@ export default function SystemAddFilters({
 
               {isOpen && (
                 <div className="absolute left-0 top-[32px] z-50 min-w-[230px] overflow-hidden rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
+                  <label className="mb-1 flex h-8 items-center gap-2 rounded-md bg-[#F2F7FC] px-2">
+                    <input autoFocus aria-label={`Search ${column.label} options`} value={optionQuery} onChange={(event) => setOptionQuery(event.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent font-montserrat text-[12px] font-medium text-[#10233A] outline-none placeholder:text-[#7288A3]" />
+                    <Search size={14} className="flex-shrink-0 text-[#7288A3]" />
+                  </label>
                   <button
                     type="button"
                     onClick={() => onValuesChange({ ...values, [key]: [] })}
@@ -200,7 +213,7 @@ export default function SystemAddFilters({
                     </span>
                   </button>
                   <div className="max-h-60 overflow-y-auto">
-                    {column.options.map((option) => {
+                    {column.options.filter((option) => option.toLocaleLowerCase().includes(optionQuery.trim().toLocaleLowerCase())).map((option) => {
                       const checked = selectedValues.includes(option);
                       return (
                         <button
@@ -238,7 +251,10 @@ export default function SystemAddFilters({
           aria-expanded={addOpen}
           onClick={() => {
             setAddOpen((current) => {
-              if (!current) setDraftKeys(activeKeys);
+              if (!current) {
+                setDraftKeys(activeKeys);
+                setColumnQuery("");
+              }
               return !current;
             });
             setOpenFilter(null);
@@ -252,14 +268,18 @@ export default function SystemAddFilters({
           <div
             className="absolute left-0 top-[32px] z-50 min-w-[240px] overflow-hidden rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]"
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
+              if (event.key === "Enter" && !(event.target instanceof HTMLInputElement)) {
                 event.preventDefault();
                 applyDraftFilters();
               }
             }}
           >
+            <label className="mb-1 flex h-8 items-center gap-2 rounded-md bg-[#F2F7FC] px-2">
+              <input autoFocus aria-label="Search available filters" value={columnQuery} onChange={(event) => setColumnQuery(event.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent font-montserrat text-[12px] font-medium text-[#10233A] outline-none placeholder:text-[#7288A3]" />
+              <Search size={14} className="flex-shrink-0 text-[#7288A3]" />
+            </label>
             <div className="max-h-[300px] overflow-y-auto">
-              {columns.map((column) => {
+              {columns.filter((column) => column.label.toLocaleLowerCase().includes(columnQuery.trim().toLocaleLowerCase())).map((column) => {
                 const checked = draftKeys.includes(column.key);
                 return (
                   <button

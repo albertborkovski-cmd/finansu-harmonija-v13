@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { Check, Plus, Trash2, X } from "lucide-react";
+import SearchableSelect from "./SearchableSelect";
 
 type FieldRule = {
   required: boolean;
@@ -104,40 +105,10 @@ function SystemSelect({
   options: string[];
   onChange: (value: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <label className="relative flex flex-col gap-2 font-montserrat text-[13px] font-semibold text-[#10233A]">
+    <label className="flex flex-col gap-2 font-montserrat text-[13px] font-semibold text-[#10233A]">
       {label}
-      <button
-        type="button"
-        aria-label={label}
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-        className="flex h-[42px] items-center justify-between rounded-lg border border-[#D3E1EC] bg-white px-[14px] text-left text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]"
-      >
-        <span className="truncate">{value || "Select export format"}</span>
-        <ChevronDown size={17} className="text-[#7288A3]" />
-      </button>
-      {open && (
-        <div className="absolute left-0 right-0 top-[70px] z-30 overflow-hidden rounded-lg border border-[#D3E1EC] bg-white py-1 shadow-[0_8px_24px_rgba(16,35,58,0.12)]">
-          {options.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => {
-                onChange(option);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left font-montserrat text-[13px] font-medium hover:bg-[#F2F9FC] ${value === option ? "bg-[#EAF5FA] text-[#007EA7]" : "text-[#10233A]"}`}
-            >
-              <span className="flex h-[18px] w-[18px] items-center justify-center rounded border border-[#AFC5D6] bg-white">
-                {value === option && <Check size={13} />}
-              </span>
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
+      <SearchableSelect ariaLabel={label} value={value} options={options} onChange={onChange} placeholder="Select export format" />
     </label>
   );
 }

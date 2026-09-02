@@ -23,6 +23,7 @@ import { ResizeHandle, useColumnResize } from "./useColumnResize";
 import { HeaderBackButton } from "./SystemNavigation";
 import TrialBalanceReportView from "./TrialBalanceReportView";
 import { loadCompanyLogo } from "../lib/companyBranding";
+import SearchableSelect from "./SearchableSelect";
 
 type ReportStatus = "Active" | "Pending" | "Processed" | "Inactive";
 
@@ -565,9 +566,7 @@ function ScheduleReportPanel({
             <input value={draft.name} onChange={(event) => onChange({ ...draft, name: event.target.value })} placeholder="Enter report name" className="system-report-input" />
           </DrawerField>
           <DrawerField label="Report type *">
-            <select value={draft.reportType} onChange={(event) => onChange({ ...draft, reportType: event.target.value })} className="system-report-input">
-              {REPORT_TYPES.map((type) => <option key={type}>{type}</option>)}
-            </select>
+            <SearchableSelect ariaLabel="Report type" value={draft.reportType} onChange={(reportType) => onChange({ ...draft, reportType })} options={REPORT_TYPES} className="system-report-input pr-9" />
           </DrawerField>
           <div className="grid grid-cols-2 gap-3">
             <DrawerField label="From *">
@@ -578,14 +577,10 @@ function ScheduleReportPanel({
             </DrawerField>
           </div>
           <DrawerField label="Frequency">
-            <select value={draft.frequency} onChange={(event) => onChange({ ...draft, frequency: event.target.value })} className="system-report-input">
-              {FREQUENCIES.map((frequency) => <option key={frequency}>{frequency}</option>)}
-            </select>
+            <SearchableSelect ariaLabel="Frequency" value={draft.frequency} onChange={(frequency) => onChange({ ...draft, frequency })} options={FREQUENCIES} className="system-report-input pr-9" />
           </DrawerField>
           <DrawerField label="File format">
-            <select value={draft.format} onChange={(event) => onChange({ ...draft, format: event.target.value })} className="system-report-input">
-              {FORMATS.map((format) => <option key={format}>{format}</option>)}
-            </select>
+            <SearchableSelect ariaLabel="File format" value={draft.format} onChange={(format) => onChange({ ...draft, format })} options={FORMATS} className="system-report-input pr-9" />
           </DrawerField>
           <DrawerField label="Recipients">
             <input value={draft.recipients} onChange={(event) => onChange({ ...draft, recipients: event.target.value })} placeholder="name@company.lt" className="system-report-input" />

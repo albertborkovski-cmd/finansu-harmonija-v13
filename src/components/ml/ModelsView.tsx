@@ -24,6 +24,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react';
+import SearchableSelect from '../SearchableSelect';
 import ColumnSettingsPanel, { type ColConfig } from '../ColumnSettingsPanel';
 import { PageActionButton, PageHeader } from '../PageHeader';
 import OcrBreadcrumb from '../OcrBreadcrumb';
@@ -748,10 +749,7 @@ export default function ModelsView() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-1">
                 <OcrSearchField ariaLabel="Search model log" value={logQuery} onChange={setLogQuery} />
-                <label className="relative flex h-7 w-[157px] items-center rounded bg-[#E5EDF9]">
-                  <select aria-label="Filter model log by severity" value={logSeverity} onChange={(event) => setLogSeverity(event.target.value)} className="h-full w-full appearance-none rounded bg-transparent px-2 pr-7 font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3] outline-none"><option>All</option><option>Info</option><option>Warning</option><option>Error</option></select>
-                  <ChevronDown size={16} className="pointer-events-none absolute right-2 text-[#7288A3]" />
-                </label>
+                <div className="h-7 w-[157px]"><SearchableSelect ariaLabel="Filter model log by severity" value={logSeverity} onChange={setLogSeverity} options={["All", "Info", "Warning", "Error"]} className="h-7 rounded bg-[#E5EDF9] px-2 pr-7 font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3]" /></div>
               </div>
               <div className="flex h-7 items-center gap-4 rounded bg-white p-1.5 text-[#7288A3]">
                 <ColumnSettingsButton onClick={() => setShowLogColumnSettings(true)} />

@@ -19,6 +19,7 @@ import { ColumnSettingsButton } from "./ScopedActionButtons";
 import TablePagination from "./TablePagination";
 import SystemAddFilters from "./SystemAddFilters";
 import { ResizeHandle, useColumnResize } from "./useColumnResize";
+import SearchableSelect from "./SearchableSelect";
 
 export interface VatClassification {
   id: string;
@@ -1891,17 +1892,9 @@ function Select({
   return (
     <label className="block font-montserrat text-[13px] font-semibold text-[#10233A]">
       {label}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-11 w-full rounded-lg border border-[#D3E1EC] bg-white px-3 font-montserrat text-[13px] font-medium outline-none focus:border-[#007EA7]"
-      >
-        <option value="-">Not used</option>
-        <option value="x">x — required</option>
-        <option value="x*">x* — conditional</option>
-        <option value="x**">x** — conditional</option>
-        <option value="x***">x*** — conditional</option>
-      </select>
+      <div className="mt-2">
+        <SearchableSelect ariaLabel={label} value={value} onChange={onChange} options={[{ value: "-", label: "Not used" }, { value: "x", label: "x — required" }, { value: "x*", label: "x* — conditional" }, { value: "x**", label: "x** — conditional" }, { value: "x***", label: "x*** — conditional" }]} className="h-11 rounded-lg border border-[#D3E1EC] bg-white px-3 pr-9 font-montserrat text-[13px] font-medium text-[#10233A]" />
+      </div>
     </label>
   );
 }

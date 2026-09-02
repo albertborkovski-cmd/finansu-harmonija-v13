@@ -20,6 +20,7 @@ import { getWorkspaceHumanCorrectionCount, subscribeToWorkspaceHumanCorrections 
 import { ResizeHandle, useColumnResize } from './useColumnResize';
 import ColumnSortButton, { useMultiColumnSort } from './ColumnSortButton';
 import { usePersistentState } from '../hooks/usePersistentState';
+import SearchableSelect from './SearchableSelect';
 export type { RunRecord } from './automationRunsStore';
 
 export interface OcrProcess {
@@ -533,7 +534,7 @@ function RunMetricsDashboard({ run }: { run: RunRecord }) {
         <button type="button" aria-label="Next metrics period" className="text-[#7288A3] hover:text-[#007EA7]"><ChevronRight size={16} /></button>
         <button type="button" aria-label="Zoom out metrics" className="text-[#7288A3] hover:text-[#007EA7]"><ZoomOut size={17} /></button>
         <button type="button" aria-label="Refresh metrics" onClick={() => setRefreshNumber(value => value + 1)} className="text-[#7288A3] hover:text-[#007EA7]"><RefreshCw size={17} /></button>
-        <select aria-label="Metrics interval" value={interval} onChange={event => setIntervalValue(event.target.value)} className="h-8 border-b border-[#D3E1EC] bg-white px-1 font-montserrat text-[12px] font-semibold text-[#7288A3] outline-none"><option>1m</option><option>5m</option><option>15m</option><option>1h</option></select>
+        <div className="w-[84px]"><SearchableSelect ariaLabel="Metrics interval" value={interval} onChange={setIntervalValue} options={["1m", "5m", "15m", "1h"]} className="h-8 border-b border-[#D3E1EC] bg-white px-1 pr-7 font-montserrat text-[12px] font-semibold text-[#7288A3]" /></div>
       </div>
 
       <div className="flex flex-col gap-3 overflow-auto p-4">
@@ -2183,14 +2184,7 @@ export default function AutomationProcessDetailView({ process, onBack, initialRu
 
             <label className="flex flex-col gap-3">
               <span className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">File format type <span className="text-[#E45858]">*</span></span>
-              <span className="relative flex h-[52px] items-center rounded-xl border border-[#D3E1EC] bg-white">
-                <select value={exportFormat} onChange={event => setExportFormat(event.target.value as 'json' | 'original' | '')} className="h-full w-full appearance-none rounded-xl bg-transparent px-4 pr-11 font-montserrat text-[16px] font-medium text-[#10233A] outline-none">
-                  <option value="" disabled>File format type</option>
-                  <option value="json">JSON</option>
-                  <option value="original">Original package</option>
-                </select>
-                <ChevronDown size={18} className="pointer-events-none absolute right-4 text-[#7288A3]" />
-              </span>
+              <SearchableSelect ariaLabel="File format type" value={exportFormat} onChange={(nextValue) => setExportFormat(nextValue as 'json' | 'original' | '')} placeholder="File format type" options={[{ value: "json", label: "JSON" }, { value: "original", label: "Original package" }]} className="h-[52px] rounded-xl border border-[#D3E1EC] bg-white px-4 pr-11 font-montserrat text-[16px] font-medium text-[#10233A]" />
             </label>
 
             <div className="flex flex-col gap-4 pt-2">

@@ -5,7 +5,6 @@ import {
   Banknote,
   Check,
   ChevronDown,
-  ChevronUp,
   FileText,
   Landmark,
   Plus,
@@ -39,6 +38,7 @@ import {
 } from "./OrganizationReferenceValuesView";
 import { loadGeneralLedgerTemplateNames } from "./GeneralLedgerView";
 import { loadVatClassificationTemplateNames } from "./VatClassificationsView";
+import SearchableSelect from "./SearchableSelect";
 
 const ROWS_PER_PAGE = 4;
 
@@ -218,8 +218,9 @@ function OrganizationSelect({
   fixedMenu?: boolean;
   strictOptions?: boolean;
 }) {
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [fixedPosition, setFixedPosition] = useState<{
     left: number;
     top: number;
@@ -238,6 +239,9 @@ function OrganizationSelect({
       ...customOptions,
     ]),
   ).filter((option) => option !== "Other");
+  const filteredOptions = visibleOptions.filter((option) =>
+    option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
   const positionFixedMenu = useCallback(() => {
     if (!fixedMenu || !triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -298,20 +302,26 @@ function OrganizationSelect({
         )}
       </span>
       <span className="relative">
-        <button
+        <input
           ref={triggerRef}
-          type="button"
+          role="combobox"
           aria-label={label.replace(" *", "")}
-          aria-haspopup="listbox"
           aria-expanded={open}
-          onClick={() => {
+          value={open ? query : value}
+          placeholder="Select"
+          autoComplete="off"
+          onFocus={(event) => {
             if (!open) positionFixedMenu();
-            setOpen((current) => !current);
+            setQuery("");
+            setOpen(true);
+            event.currentTarget.select();
           }}
-          className="flex h-[42px] w-full items-center justify-between rounded-lg border border-[#D3E1EC] bg-white px-[14px] text-left font-montserrat text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]"
-        >
-          <span>{value || "Select"}</span>
-          <ChevronDown size={16} className="text-[#7288A3]" />
+          onClick={() => setOpen(true)}
+          onChange={(event) => { setQuery(event.target.value); setOpen(true); }}
+          className="h-[42px] w-full rounded-lg border border-[#D3E1EC] bg-white px-[14px] pr-10 font-montserrat text-[14px] font-medium text-[#10233A] outline-none placeholder:text-[#A1B6C6] focus:border-[#007EA7]"
+        />
+        <button type="button" tabIndex={-1} aria-label={`Open ${optionNameLower} options`} onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(""); setOpen((current) => !current); }} className="absolute right-0 top-0 flex h-[42px] w-10 items-center justify-center text-[#7288A3]">
+          <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
         {open && (
           <span
@@ -320,7 +330,7 @@ function OrganizationSelect({
             style={fixedMenu && fixedPosition ? fixedPosition : undefined}
             className={`${fixedMenu ? "fixed z-[220] overscroll-contain" : `absolute left-0 z-[160] max-h-60 w-full ${menuPlacement === "up" ? "bottom-[46px]" : "top-[46px]"}`} block overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]`}
           >
-            {visibleOptions.map((option) => {
+            {filteredOptions.map((option) => {
               const selected = value === option;
               return (
                 <button
@@ -331,6 +341,7 @@ function OrganizationSelect({
                   onClick={() => {
                     onChange(option);
                     setOpen(false);
+                    setQuery("");
                   }}
                   className={`flex min-h-9 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left ${selected ? "bg-[#F0F7FA]" : "hover:bg-[#F7FBFC]"}`}
                 >
@@ -3310,24 +3321,7 @@ export default function Companies({
                 <span className="font-montserrat font-semibold text-[14px] leading-[140%] text-[#10233A]">
                   File format type <span className="text-red-500">*</span>
                 </span>
-                <div className="relative">
-                  <select
-                    value={exportFormat}
-                    onChange={(e) => setExportFormat(e.target.value)}
-                    className="w-full h-[42px] px-[14px] bg-white border border-[#D3E1EC] rounded-lg appearance-none font-montserrat font-medium text-[14px] leading-[140%] text-[#A1B6C6] focus:outline-none focus:border-[#007EA7] transition-colors"
-                  >
-                    <option value="" disabled>
-                      Select format
-                    </option>
-                    <option value="csv">CSV</option>
-                    <option value="xlsx">XLSX</option>
-                    <option value="json">JSON</option>
-                  </select>
-                  <ChevronUp
-                    size={16}
-                    className="absolute right-[14px] top-1/2 -translate-y-1/2 text-[#7288A3] rotate-180 pointer-events-none"
-                  />
-                </div>
+                <SearchableSelect ariaLabel="File format type" value={exportFormat} onChange={setExportFormat} placeholder="Select format" options={[{ value: "csv", label: "CSV" }, { value: "xlsx", label: "XLSX" }, { value: "json", label: "JSON" }]} />
               </div>
             </div>
 

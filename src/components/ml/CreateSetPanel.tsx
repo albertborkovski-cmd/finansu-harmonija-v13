@@ -17,18 +17,20 @@ export function SystemDropdown({ value, options, placeholder, ariaLabel, open, o
   onToggle: () => void;
   onSelect: (value: string) => void;
 }) {
+  const [query, setQuery] = useState('');
+  const filteredOptions = options.filter(option => option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   return (
     <div className="relative w-full">
-      <button type="button" aria-label={ariaLabel} aria-expanded={open} onClick={onToggle} className={`flex h-[42px] w-full items-center justify-between rounded-lg border bg-white px-[14px] font-montserrat text-[14px] font-medium leading-5 outline-none transition-colors ${open ? 'border-[#007EA7] ring-2 ring-[#007EA7]/10' : 'border-[#D3E1EC] hover:border-[#A1B6C6]'}`}>
-        <span className={value ? 'truncate text-[#10233A]' : 'truncate text-[#A1B6C6]'}>{value || placeholder}</span>
+      <input role="combobox" aria-label={ariaLabel} aria-expanded={open} value={open ? query : value} placeholder={placeholder} autoComplete="off" onFocus={(event) => { setQuery(''); if (!open) onToggle(); event.currentTarget.select(); }} onClick={() => { if (!open) onToggle(); }} onChange={(event) => { setQuery(event.target.value); if (!open) onToggle(); }} className={`h-[42px] w-full rounded-lg border bg-white px-[14px] pr-10 font-montserrat text-[14px] font-medium leading-5 text-[#10233A] outline-none transition-colors placeholder:text-[#A1B6C6] ${open ? 'border-[#007EA7] ring-2 ring-[#007EA7]/10' : 'border-[#D3E1EC] hover:border-[#A1B6C6]'}`} />
+      <button type="button" tabIndex={-1} aria-label={`Open ${ariaLabel} options`} onMouseDown={event => event.preventDefault()} onClick={() => { setQuery(''); onToggle(); }} className="absolute right-0 top-0 flex h-[42px] w-10 items-center justify-center text-[#7288A3]">
         <ChevronDown size={16} className={`flex-shrink-0 text-[#7288A3] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div role="listbox" aria-label={`${ariaLabel} options`} className="absolute left-0 right-0 top-[46px] z-50 max-h-[220px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1 shadow-[0_10px_24px_rgba(16,35,58,0.14)]">
-          {options.map((option) => {
+          {filteredOptions.map((option) => {
             const selected = option === value;
             return (
-              <button key={option} type="button" role="option" aria-selected={selected} onClick={() => onSelect(option)} className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[13px] font-semibold text-[#10233A] transition-colors ${selected ? 'bg-[#E5EDF9]' : 'hover:bg-[#F8FDFF]'}`}>
+              <button key={option} type="button" role="option" aria-selected={selected} onClick={() => { setQuery(''); onSelect(option); }} className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[13px] font-semibold text-[#10233A] transition-colors ${selected ? 'bg-[#E5EDF9]' : 'hover:bg-[#F8FDFF]'}`}>
                 <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>{selected && <Check size={12} strokeWidth={2.5} className="text-white" />}</span>
                 <span className="truncate">{option}</span>
               </button>

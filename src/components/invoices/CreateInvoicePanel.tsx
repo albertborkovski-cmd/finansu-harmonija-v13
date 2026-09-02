@@ -6,6 +6,7 @@ import { supabase, type Company } from '../../lib/supabase';
 import { getCurrentUserName } from '../../lib/currentUser';
 import HorizontalTableScrollbar from '../HorizontalTableScrollbar';
 import { PageActionButton } from '../PageHeader';
+import SearchableSelect from '../SearchableSelect';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import SendInvoicePanel from './SendInvoicePanel';
@@ -1799,51 +1800,7 @@ function CompactServiceInput({ value, onChange, placeholder, type = 'text', expa
 }
 
 function CompactSystemServiceSelect({ value, onChange, placeholder, options }: { value: string; onChange: (value: string) => void; placeholder: string; options: string[] }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className={`relative min-w-0 w-full ${open ? 'z-40' : 'z-0'}`}>
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-        className={`flex h-[26px] w-full items-center justify-between rounded border bg-white px-2 text-left font-montserrat text-[12px] font-medium leading-[18px] outline-none transition-colors ${open ? 'border-[#007EA7] ring-2 ring-[#007EA7]/10' : 'border-[#D3E1EC] hover:border-[#A1B6C6]'}`}
-      >
-        <span className={`truncate ${value ? 'text-[#10233A]' : 'text-[#A1B6C6]'}`}>
-          {value || placeholder}
-        </span>
-        <ChevronDown size={14} className={`flex-shrink-0 text-[#7288A3] transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div
-          role="listbox"
-          className="absolute left-0 top-[30px] z-50 min-w-[180px] overflow-hidden rounded-lg border border-[#D3E1EC] bg-white p-1 shadow-[0_10px_24px_rgba(16,35,58,0.14)]"
-        >
-          {options.map((option) => {
-            const selected = option === value;
-            return (
-              <button
-                key={option}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => {
-                  onChange(option);
-                  setOpen(false);
-                }}
-                className={`flex min-h-9 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[12px] font-semibold text-[#10233A] transition-colors ${selected ? 'bg-[#E5EDF9]' : 'hover:bg-[#F8FDFF]'}`}
-              >
-                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>
-                  {selected && <Check size={12} strokeWidth={2.5} className="text-white" />}
-                </span>
-                <span className="truncate">{option}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  return <SearchableSelect ariaLabel={placeholder} value={value} onChange={onChange} placeholder={placeholder} options={options} className="h-[26px] rounded border border-[#D3E1EC] bg-white px-2 pr-7 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]" menuClassName="min-w-[180px]" />;
 }
 
 function CompactServiceValue({ value }: { value: string }) {

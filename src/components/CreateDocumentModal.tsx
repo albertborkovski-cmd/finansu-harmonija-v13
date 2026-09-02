@@ -9,6 +9,7 @@ import { loadVatClassifications } from './VatClassificationsView';
 import { loadVatClassificationTemplateNames } from './VatClassificationsView';
 import { getCurrentUserName } from '../lib/currentUser';
 import GeneralLedgerAccountSelect from './GeneralLedgerAccountSelect';
+import SearchableSelect from './SearchableSelect';
 import { loadOperationDateValidationRule, resolveOperationDate } from './OperationDateValidationView';
 import type { DocumentLineItem } from './Documents';
 import { PageActionButton } from './PageHeader';
@@ -326,11 +327,15 @@ function ManagedSelect({
   const [adding, setAdding] = useState(false);
   const [newValue, setNewValue] = useState('');
   const [savingNewValue, setSavingNewValue] = useState(false);
+  const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
     };
     document.addEventListener('mousedown', closeOnOutsideClick);
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
@@ -347,25 +352,31 @@ function ManagedSelect({
     setSavingNewValue(false);
     setOpen(false);
   };
+  const filteredOptions = options.filter((option) =>
+    option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
 
   return (
     <div ref={containerRef} className="relative min-w-0">
-      <button
+      <input
         disabled={disabled}
-        type="button"
-        aria-haspopup="listbox"
+        role="combobox"
         aria-expanded={open}
-        onClick={() => !disabled && setOpen((current) => !current)}
-        className={`document-value-control group flex h-[26px] w-full items-center justify-between rounded border bg-white px-2 font-montserrat text-[12px] font-medium outline-none transition-colors disabled:cursor-not-allowed disabled:bg-[#F3F6F8] disabled:text-[#7288A3] ${
+        aria-label={placeholder}
+        value={open ? query : value}
+        placeholder={placeholder}
+        autoComplete="off"
+        onFocus={(event) => { if (!disabled) { setQuery(''); setOpen(true); event.currentTarget.select(); } }}
+        onClick={() => !disabled && setOpen(true)}
+        onChange={(event) => { setQuery(event.target.value); setOpen(true); }}
+        className={`document-value-control h-[26px] w-full rounded border bg-white px-2 pr-7 font-montserrat text-[12px] font-medium text-[#10233A] outline-none transition-colors placeholder:text-[#A1B6C6] disabled:cursor-not-allowed disabled:bg-[#F3F6F8] disabled:text-[#7288A3] ${
           open ? 'border-[#007EA7] ring-1 ring-[#007EA7]/20' : 'border-[#D3E1EC] hover:border-[#A1B6C6]'
         }`}
-      >
-        <span className={`min-w-0 truncate text-left ${value ? 'text-[#10233A]' : 'text-[#A1B6C6]'}`}>
-          {value || placeholder}
-        </span>
+      />
+      <button type="button" tabIndex={-1} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(''); setOpen((current) => !current); }} className="absolute right-0 top-0 flex h-[26px] w-7 items-center justify-center text-[#7288A3] disabled:hidden">
         <ChevronDown
           size={14}
-          className={`flex-shrink-0 text-[#7288A3] transition-transform group-disabled:hidden ${open ? 'rotate-180' : ''}`}
+          className={`transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
@@ -373,12 +384,12 @@ function ManagedSelect({
           role="listbox"
           className="absolute left-0 right-0 top-[30px] z-[80] max-h-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]"
         >
-          {options.length === 0 ? (
+          {filteredOptions.length === 0 ? (
             <div className="px-3 py-3 font-montserrat text-[12px] text-[#A1B6C6]">
               No available records
             </div>
           ) : (
-            options.map((option) => {
+            filteredOptions.map((option) => {
               const selected = option === value;
               return (
                 <button
@@ -389,6 +400,7 @@ function ManagedSelect({
                   onClick={() => {
                     onChange(option);
                     setOpen(false);
+                    setQuery('');
                   }}
                   className={`flex min-h-9 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#F2F7FC] ${selected ? 'bg-[#F2F7FC]' : ''}`}
                 >
@@ -494,50 +506,7 @@ function FinancialLineSelect({
   options: string[];
   emptyMessage?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', closeOnOutsideClick);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('mousedown', closeOnOutsideClick);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [open]);
-
-  return (
-    <div ref={containerRef} className={`relative min-w-0 w-full ${open ? 'z-40' : 'z-0'}`}>
-      <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)} className={`document-value-control group flex h-[26px] w-full items-center justify-between rounded border bg-white px-2 text-left font-montserrat text-[12px] font-medium leading-[18px] outline-none transition-colors disabled:cursor-not-allowed disabled:bg-[#F3F6F8] disabled:text-[#7288A3] ${open ? 'border-[#007EA7] ring-2 ring-[#007EA7]/10' : 'border-[#D3E1EC] hover:border-[#A1B6C6]'}`}>
-        <span className={`min-w-0 truncate ${value ? 'text-[#10233A]' : 'text-[#A1B6C6]'}`}>{value || placeholder}</span>
-        <ChevronDown size={14} className={`flex-shrink-0 text-[#7288A3] transition-transform group-disabled:hidden ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div role="listbox" className="absolute left-0 top-[30px] z-50 max-h-60 w-[220px] max-w-[min(320px,calc(100vw-32px))] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1 shadow-[0_10px_24px_rgba(16,35,58,0.14)]">
-          {options.length === 0 ? (
-            <div className="flex min-h-10 items-center rounded-md bg-[#F8FDFF] px-3 py-2 font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3]">
-              {emptyMessage}
-            </div>
-          ) : options.map((option) => {
-              const selected = option === value;
-              return (
-                <button key={option} type="button" role="option" aria-selected={selected} onClick={() => { onChange(option); setOpen(false); }} className={`flex min-h-9 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[12px] font-semibold text-[#10233A] transition-colors ${selected ? 'bg-[#E5EDF9]' : 'hover:bg-[#F8FDFF]'}`}>
-                  <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>{selected && <Check size={12} strokeWidth={2.5} className="text-white" />}</span>
-                  <span className="whitespace-normal break-words">{option}</span>
-                </button>
-              );
-            })}
-        </div>
-      )}
-    </div>
-  );
+  return <SearchableSelect ariaLabel={placeholder} value={value} onChange={onChange} options={options} placeholder={placeholder} emptyMessage={emptyMessage} className="document-value-control h-[26px] rounded border border-[#D3E1EC] bg-white px-2 pr-7 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]" menuClassName="w-[220px] max-w-[min(320px,calc(100vw-32px))]" />;
 }
 
 function FinancialLineValue({ value, disabled = false }: { value: string; disabled?: boolean }) {

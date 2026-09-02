@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Download, Upload, X } from 'lucide-react';
+import { Download, Upload, X } from 'lucide-react';
+import SearchableSelect from './SearchableSelect';
 
 interface ImportButtonProps {
   scope: string;
@@ -166,16 +167,7 @@ export default function ImportButton({ scope, onImport, className = '', variant 
 
             <label className="flex flex-col gap-2">
               <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Choose file format</span>
-              <span className="relative flex h-[42px] items-center rounded-lg border border-[#D3E1EC] bg-white">
-                <select value={format} onChange={event => setFormat(event.target.value)} className="h-full w-full appearance-none rounded-lg bg-transparent px-[14px] pr-10 font-montserrat text-[14px] font-medium text-[#10233A] outline-none">
-                  <option>Default</option>
-                  <option>CSV</option>
-                  <option>JSON</option>
-                  <option>Excel</option>
-                  <option>XML</option>
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-[14px] text-[#7288A3]" />
-              </span>
+              <SearchableSelect ariaLabel="Choose file format" value={format} onChange={setFormat} options={["Default", "CSV", "JSON", "Excel", "XML"]} />
             </label>
 
             <div className="flex justify-end gap-2">

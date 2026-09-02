@@ -363,12 +363,15 @@ function MultiSelectField({
 }) {
   const selected = value ?? [];
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+        setQuery("");
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -381,6 +384,9 @@ function MultiSelectField({
         : [...selected, option],
     );
   };
+  const filteredOptions = (options ?? []).filter((option) =>
+    option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
 
   return (
     <div className="flex flex-col gap-2 w-full" ref={ref}>
@@ -391,10 +397,8 @@ function MultiSelectField({
       <div
         className={`w-full rounded-lg transition-shadow ${open ? "ring-[3px] ring-[#007EA7]/20" : ""}`}
       >
-        <button
-          type="button"
+        <div
           aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
           className={`box-border flex min-h-[42px] w-full items-start justify-between gap-2 rounded-lg bg-white p-[9px] text-left transition-colors ${open ? "border border-[#007EA7]" : "border border-[#D3E1EC]"}`}
         >
           {selected.length > 0 ? (
@@ -421,20 +425,17 @@ function MultiSelectField({
                 </span>
               ))}
             </span>
-          ) : (
-            <span className="flex-1 font-montserrat text-[14px] font-medium leading-5 text-[#A1B6C6]">
-              {placeholder ?? "Choose"}
-            </span>
-          )}
-          <ChevronDown
+          ) : null}
+          <input role="combobox" aria-label={`Search ${label.toLowerCase()}`} aria-expanded={open} value={query} placeholder={selected.length ? "" : placeholder ?? "Choose"} onFocus={() => setOpen(true)} onClick={() => setOpen(true)} onChange={(event) => { setQuery(event.target.value); setOpen(true); }} className="min-w-[70px] flex-1 bg-transparent font-montserrat text-[14px] font-medium leading-5 text-[#10233A] outline-none placeholder:text-[#A1B6C6]" />
+          <button type="button" tabIndex={-1} aria-label={`Open ${label.toLowerCase()} options`} onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(""); setOpen((current) => !current); }}><ChevronDown
             size={16}
             className={`mt-[3px] flex-shrink-0 text-[#7288A3] transition-transform ${open ? "rotate-180" : ""}`}
-          />
-        </button>
+          /></button>
+        </div>
 
         {open && (
           <div className="mt-1 max-h-[308px] overflow-y-auto rounded-lg border border-[#E5EDF9] bg-white px-3 py-3 shadow-[0_8px_20px_rgba(161,182,198,0.35)]">
-            {(options ?? []).map((option) => {
+            {filteredOptions.map((option) => {
               const checked = selected.includes(option);
               return (
                 <button

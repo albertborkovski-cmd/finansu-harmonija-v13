@@ -15,6 +15,7 @@ import { HeaderBackButton } from "./SystemNavigation";
 import { getCurrentUserName } from "../lib/currentUser";
 import { loadCompanyGeneralLedgerAccountOptions } from "./GeneralLedgerView";
 import GeneralLedgerAccountSelect from "./GeneralLedgerAccountSelect";
+import SearchableSelect from "./SearchableSelect";
 import {
   loadOrganizationReferenceRecords,
   loadOrganizationReferenceValues,
@@ -174,83 +175,12 @@ function EditablePartyField({
   counterparties: Company[];
   onSelect: (counterparty: Company) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
-  }, [open]);
-
   return (
-    <div ref={containerRef} className={`relative flex min-w-0 flex-col gap-2 ${open ? "z-[120]" : "z-0"}`}>
+    <div className="relative flex min-w-0 flex-col gap-2">
       <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">
         {label}
       </span>
-      <div className="relative">
-        <button
-          type="button"
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
-          className={`flex h-8 w-full items-center justify-between rounded-md border bg-white px-2 font-montserrat text-[14px] font-medium leading-5 outline-none transition-colors ${
-            open
-              ? "border-[#007EA7] ring-2 ring-[#007EA7]/10"
-              : "border-[#D3E1EC] hover:border-[#A1B6C6]"
-          }`}
-        >
-          <span className={`truncate ${value ? "text-[#10233A]" : "text-[#A1B6C6]"}`}>
-            {value || "Select counterparty"}
-          </span>
-          <ChevronDown
-            className={`flex-shrink-0 text-[#7288A3] transition-transform ${open ? "rotate-180" : ""}`}
-            size={16}
-          />
-        </button>
-        {open && (
-          <div
-            role="listbox"
-            className="absolute left-0 right-0 top-[36px] z-[140] max-h-[260px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_10px_28px_rgba(16,35,58,0.16)]"
-          >
-            {counterparties.length === 0 ? (
-              <div className="px-3 py-3 font-montserrat text-[12px] text-[#A1B6C6]">
-                No counterparties configured
-              </div>
-            ) : (
-              counterparties.map((counterparty) => {
-                const selected = counterparty.id === selectedId;
-                return (
-                  <button
-                    key={counterparty.id}
-                    type="button"
-                    role="option"
-                    aria-selected={selected}
-                    onClick={() => {
-                      onSelect(counterparty);
-                      setOpen(false);
-                    }}
-                    className={`flex min-h-9 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[12px] font-medium text-[#10233A] transition-colors ${selected ? "bg-[#E7F4F9]" : "hover:bg-[#F8FDFF]"}`}
-                  >
-                    <span
-                      className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? "border-[#007EA7] bg-[#007EA7]" : "border-[#A1B6C6] bg-white"}`}
-                    >
-                      {selected && <Check size={12} strokeWidth={2.5} className="text-white" />}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate">{counterparty.name}</span>
-                    <span className="flex-shrink-0 text-[#7288A3]">
-                      {counterparty.company_code || "—"}
-                    </span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        )}
-      </div>
+      <SearchableSelect ariaLabel={label} value={selectedId} placeholder={value || "Select counterparty"} emptyMessage="No counterparties configured" options={counterparties.map((counterparty) => ({ value: counterparty.id, label: `${counterparty.name}${counterparty.company_code ? ` · ${counterparty.company_code}` : ""}` }))} onChange={(id) => { const counterparty = counterparties.find((item) => item.id === id); if (counterparty) onSelect(counterparty); }} className="h-8 rounded-md border border-[#D3E1EC] bg-white px-2 pr-9 font-montserrat text-[14px] font-medium leading-5 text-[#10233A]" />
     </div>
   );
 }
@@ -264,65 +194,12 @@ function AccountablePersonField({
   users: LinkedDirectoryUser[];
   onChange: (value: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
   return (
-    <div ref={containerRef} className={`relative flex min-w-0 flex-col gap-2 ${open ? "z-[110]" : "z-0"}`}>
+    <div className="relative flex min-w-0 flex-col gap-2">
       <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">
         Accountable person
       </span>
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-        className={`flex h-8 w-full items-center justify-between rounded-md border bg-white px-2 font-montserrat text-[14px] font-medium leading-5 transition-colors ${open ? "border-[#007EA7] ring-2 ring-[#007EA7]/10" : "border-[#D3E1EC] hover:border-[#A1B6C6]"}`}
-      >
-        <span className={`truncate ${value ? "text-[#10233A]" : "text-[#A1B6C6]"}`}>
-          {value || "Select internal user"}
-        </span>
-        <ChevronDown size={16} className={`flex-shrink-0 text-[#7288A3] transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div role="listbox" className="absolute left-0 top-[64px] z-[130] max-h-[260px] w-[320px] max-w-[calc(100vw-48px)] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_10px_28px_rgba(16,35,58,0.16)]">
-          {users.length === 0 ? (
-            <div className="px-3 py-3 font-montserrat text-[12px] text-[#A1B6C6]">No internal users configured</div>
-          ) : users.map((user) => {
-            const label = user.fullName || user.username || user.email || "Unnamed user";
-            const selected = label === value;
-            return (
-              <button
-                key={user.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => { onChange(label); setOpen(false); }}
-                className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[#10233A] transition-colors ${selected ? "bg-[#E7F4F9]" : "hover:bg-[#F8FDFF]"}`}
-              >
-                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? "border-[#007EA7] bg-[#007EA7]" : "border-[#A1B6C6] bg-white"}`}>
-                  {selected && <Check size={12} strokeWidth={2.5} className="text-white" />}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-[12px] font-semibold leading-[18px]">{label}</span>
-                  {user.email && (
-                    <span className="truncate text-[11px] font-medium leading-4 text-[#7288A3]">
-                      {user.email}
-                    </span>
-                  )}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <SearchableSelect ariaLabel="Accountable person" value={value} placeholder="Select internal user" emptyMessage="No internal users configured" options={users.map((user) => { const name = user.fullName || user.username || user.email || "Unnamed user"; return { value: name, label: user.email && user.email !== name ? `${name} · ${user.email}` : name }; })} onChange={onChange} className="h-8 rounded-md border border-[#D3E1EC] bg-white px-2 pr-9 font-montserrat text-[14px] font-medium leading-5 text-[#10233A]" />
     </div>
   );
 }
@@ -365,36 +242,10 @@ function EditableOptionField({
   options: string[];
   onChange: (value: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
   return (
-    <div ref={containerRef} className={`relative flex min-w-0 flex-col gap-2 ${open ? "z-[105]" : "z-0"}`}>
+    <div className="relative flex min-w-0 flex-col gap-2">
       <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">{label}</span>
-      <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)} className={`flex h-8 w-full items-center justify-between rounded-md border bg-white px-2 font-montserrat text-[14px] font-medium leading-5 transition-colors ${open ? "border-[#007EA7] ring-2 ring-[#007EA7]/10" : "border-[#D3E1EC] hover:border-[#A1B6C6]"}`}>
-        <span className={`truncate ${value ? "text-[#10233A]" : "text-[#A1B6C6]"}`}>{value || "Select value"}</span>
-        <ChevronDown size={16} className={`flex-shrink-0 text-[#7288A3] transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div role="listbox" className="absolute left-0 right-0 top-[64px] z-[125] max-h-[240px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_10px_28px_rgba(16,35,58,0.16)]">
-          {options.map((option) => {
-            const selected = option === value;
-            return (
-              <button key={option} type="button" role="option" aria-selected={selected} onClick={() => { onChange(option); setOpen(false); }} className={`flex min-h-9 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[12px] font-medium text-[#10233A] transition-colors ${selected ? "bg-[#E7F4F9]" : "hover:bg-[#F8FDFF]"}`}>
-                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? "border-[#007EA7] bg-[#007EA7]" : "border-[#A1B6C6] bg-white"}`}>{selected && <Check size={12} strokeWidth={2.5} className="text-white" />}</span>
-                <span className="truncate">{option}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <SearchableSelect ariaLabel={label} value={value} options={options} onChange={onChange} placeholder="Select value" className="h-8 rounded-md border border-[#D3E1EC] bg-white px-2 pr-9 font-montserrat text-[14px] font-medium leading-5 text-[#10233A]" />
     </div>
   );
 }
@@ -512,6 +363,7 @@ function LookupDropdownCell({
   onChange: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [options, setOptions] = useState<string[]>([]);
   const [optionLabels, setOptionLabels] = useState<Record<string, string>>({});
   const [newVal, setNewVal] = useState("");
@@ -521,6 +373,11 @@ function LookupDropdownCell({
     ["department_code", "cost_center", "object_project", "product_group", "series"].includes(lookupType) && companyId
       ? `${lookupType}::company::${companyId}`
       : lookupType;
+  const filteredOptions = options.filter((option) =>
+    `${option} ${optionLabels[option] ?? ""}`
+      .toLocaleLowerCase()
+      .includes(query.trim().toLocaleLowerCase()),
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -614,8 +471,8 @@ function LookupDropdownCell({
       className="relative flex-shrink-0"
       style={{ width }}
     >
-      <button
-        type="button"
+      <input
+        role="combobox"
         aria-label={
           lookupType === "unit"
             ? "Unit"
@@ -623,14 +480,17 @@ function LookupDropdownCell({
               ? "Product group"
               : undefined
         }
-        aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className={`flex h-[26px] w-full items-center justify-between rounded border bg-white px-2 py-1 font-montserrat text-[12px] font-medium leading-[18px] outline-none transition-colors ${open ? "border-[#007EA7] ring-1 ring-[#007EA7]/20" : "border-[#D3E1EC] hover:border-[#A1B6C6]"}`}
+        value={open ? query : value}
+        autoComplete="off"
+        onFocus={(event) => { setQuery(""); setOpen(true); event.currentTarget.select(); }}
+        onClick={() => setOpen(true)}
+        onChange={(event) => { setQuery(event.target.value); setOpen(true); }}
+        className={`h-[26px] w-full rounded border bg-white px-2 py-1 pr-7 font-montserrat text-[12px] font-medium leading-[18px] outline-none transition-colors ${open ? "border-[#007EA7] ring-1 ring-[#007EA7]/20" : "border-[#D3E1EC] hover:border-[#A1B6C6]"}`}
         style={{ background: "#FFFFFF", color: value ? "#10233A" : "#A1B6C6" }}
-      >
-        <span className="truncate">{value || ""}</span>
-        <ChevronDown size={12} className="text-[#7288A3] flex-shrink-0 ml-1" />
+      />
+      <button type="button" tabIndex={-1} aria-label="Open options" onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(""); setOpen((current) => !current); }} className="absolute right-0 top-0 flex h-[26px] w-7 items-center justify-center text-[#7288A3]">
+        <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div
@@ -646,12 +506,12 @@ function LookupDropdownCell({
           style={{ minWidth: lookupType === "unit" ? 240 : Math.max(width, 160) }}
         >
           <div className="max-h-40 overflow-y-auto">
-            {options.length === 0 && (
+            {filteredOptions.length === 0 && (
               <div className="px-3 py-2 text-[11px] text-[#A1B6C6] font-montserrat">
                 No options yet
               </div>
             )}
-            {options.map((opt) => (
+            {filteredOptions.map((opt) => (
               <button
                 key={opt}
                 type="button"
@@ -663,6 +523,7 @@ function LookupDropdownCell({
                   }
                   onChange(opt);
                   setOpen(false);
+                  setQuery("");
                 }}
                 className={`flex min-h-9 w-full items-center rounded-md px-2 py-1.5 text-left font-montserrat text-[12px] font-medium transition-colors hover:bg-[#F2F7FC] ${opt === value ? "bg-[#F2F7FC]" : ""} ${lookupType === "unit" ? "gap-3" : "justify-between"}`}
                 style={{ color: opt === value ? "#007EA7" : "#10233A" }}
