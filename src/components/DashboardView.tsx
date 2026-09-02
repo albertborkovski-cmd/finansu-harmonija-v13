@@ -926,7 +926,7 @@ export default function DashboardView({
                       type="button"
                       disabled={!allCompanies}
                       onClick={() => uploadInputRef.current?.click()}
-                      className="font-semibold text-[#007EA7] transition-colors hover:text-[#007EA7] disabled:cursor-default disabled:text-[#7288A3]"
+                      className="font-semibold text-[#007EA7] transition-colors hover:text-[#007EA7] disabled:cursor-default disabled:text-[#007EA7]"
                     >
                       browse files
                     </button>
