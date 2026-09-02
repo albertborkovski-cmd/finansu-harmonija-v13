@@ -56,13 +56,11 @@ const statusDotColors: Record<UploadedStatus, string> = {
 function displayUploadedDate(document: DbDocument) {
   const timestamp = uploadedTimestamp(document);
   if (!timestamp) return document.receive_date || '—';
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(timestamp));
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function statusReason(_document: DbDocument, status: UploadedStatus) {
