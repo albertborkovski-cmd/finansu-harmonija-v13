@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, Send, X } from 'lucide-react';
+import { Check, Send, X } from 'lucide-react';
+import SearchableSelect from '../SearchableSelect';
 import {
   appendOrganizationEmailHistory,
   createDebtReconciliationPortalUrl,
@@ -43,7 +44,6 @@ export default function SendInvoicePanel({
   onClose,
 }: SendInvoicePanelProps) {
   const templates = useMemo(() => loadOrganizationEmailTemplates().filter((template) => template.active), []);
-  const [templateOpen, setTemplateOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0]?.id ?? '');
   const [email, setEmail] = useState(recipientEmail);
   const [portalUrl] = useState(() => createDebtReconciliationPortalUrl(invoice.number || invoice.id));
@@ -84,7 +84,6 @@ export default function SendInvoicePanel({
     setSelectedTemplateId(template.id);
     setSubject(renderOrganizationEmailTemplate(template.subject, templateData));
     setMessage(renderOrganizationEmailTemplate(template.body, templateData));
-    setTemplateOpen(false);
   };
 
   const send = () => {
@@ -115,7 +114,7 @@ export default function SendInvoicePanel({
           ) : (
             <div className="flex flex-col gap-5">
               <div className="grid grid-cols-2 gap-3 rounded-lg border border-[#D3E1EC] bg-[#F8FDFF] p-4"><Summary label="Sender organization" value={senderName} /><Summary label="Recipient counterparty" value={recipient} /><Summary label="Reconciliation date" value={reconciliationDate} /><Summary label="Debt balance" value={debtBalance} /></div>
-              <Field label="Template"><div className="relative"><button type="button" aria-haspopup="listbox" aria-expanded={templateOpen} onClick={() => setTemplateOpen((open) => !open)} className="flex h-9 w-full items-center justify-between rounded-md border border-[#D3E1EC] bg-white px-3 font-montserrat text-[12px] font-medium text-[#10233A] outline-none hover:border-[#A1B6C6]"><span>{selectedTemplate ? `${selectedTemplate.name} · ${selectedTemplate.language}` : 'No active templates'}</span><ChevronDown size={15} className={`text-[#7288A3] transition-transform ${templateOpen ? 'rotate-180' : ''}`} /></button>{templateOpen && <div role="listbox" className="absolute left-0 right-0 top-10 z-30 rounded-lg border border-[#D3E1EC] bg-white p-1 shadow-[0_10px_24px_rgba(16,35,58,0.14)]">{templates.map((template) => <button key={template.id} type="button" role="option" aria-selected={template.id === selectedTemplateId} onClick={() => selectTemplate(template.id)} className={`flex min-h-9 w-full items-center justify-between rounded-md px-3 py-2 text-left font-montserrat text-[12px] font-medium ${template.id === selectedTemplateId ? 'bg-[#E5EDF9] text-[#007EA7]' : 'text-[#10233A] hover:bg-[#F8FDFF]'}`}><span>{template.name}</span><span className="text-[#7288A3]">{template.language}</span></button>)}</div>}</div></Field>
+              <Field label="Template"><SearchableSelect ariaLabel="Template" value={selectedTemplateId} onChange={selectTemplate} placeholder="No active templates" options={templates.map((template) => ({ value: template.id, label: `${template.name} · ${template.language}` }))} className="h-9 rounded-md border border-[#D3E1EC] bg-white px-3 pr-9 font-montserrat text-[12px] font-medium text-[#10233A]" /></Field>
               <Field label="Recipient email"><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter counterparty email" className="h-9 w-full rounded-md border border-[#D3E1EC] px-3 font-montserrat text-[12px] font-medium text-[#10233A] outline-none placeholder:text-[#A1B6C6] focus:border-[#007EA7]" /></Field>
               <Field label="Subject"><input value={subject} onChange={(event) => setSubject(event.target.value)} className="h-9 w-full rounded-md border border-[#D3E1EC] px-3 font-montserrat text-[12px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]" /></Field>
               <Field label="Message"><textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={12} className="w-full resize-y rounded-md border border-[#D3E1EC] px-3 py-2 font-montserrat text-[12px] font-medium leading-5 text-[#10233A] outline-none focus:border-[#007EA7]" /></Field>

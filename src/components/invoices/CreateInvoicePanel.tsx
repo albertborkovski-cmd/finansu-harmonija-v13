@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X, ChevronDown, ChevronUp, Trash2, Paperclip, Check, ArrowLeft, Send, FileText } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Trash2, Paperclip, ArrowLeft, Send, FileText } from 'lucide-react';
 import { loadOrganizationReferenceValues } from '../OrganizationReferenceValuesView';
 import { loadVatClassificationTemplateNames } from '../VatClassificationsView';
 import { supabase, type Company } from '../../lib/supabase';
@@ -1697,7 +1697,6 @@ function InvoiceDetailRow({
   onChange?: (value: string) => void;
 }) {
   const isSelect = select || Boolean(options);
-  const [open, setOpen] = useState(false);
   const [internalValue, setInternalValue] = useState('');
   const value = controlledValue ?? internalValue;
   const updateValue = (nextValue: string) => {
@@ -1706,7 +1705,7 @@ function InvoiceDetailRow({
   };
   return (
     <div
-      className={`relative flex h-9 w-full items-center rounded-lg font-montserrat text-[12px] leading-[18px] ${compactSeller ? 'gap-[2px] py-[5px] pl-3 pr-[5px]' : 'px-3'} ${open ? 'z-40' : 'z-0'} ${shaded ? 'bg-[#F8FDFF]' : 'bg-white'}`}
+      className={`relative flex h-9 w-full items-center rounded-lg font-montserrat text-[12px] leading-[18px] ${compactSeller ? 'gap-[2px] py-[5px] pl-3 pr-[5px]' : 'px-3'} ${shaded ? 'bg-[#F8FDFF]' : 'bg-white'}`}
     >
       <span className="w-[200px] flex-shrink-0 font-normal text-[#10233A]">
         {label}
@@ -1714,53 +1713,7 @@ function InvoiceDetailRow({
       </span>
       <div className="relative min-w-0 flex-1">
         {isSelect ? (
-          <div className="relative w-full">
-            <button
-              type="button"
-              aria-label={label}
-              aria-haspopup="listbox"
-              aria-expanded={open}
-              onClick={() => setOpen((current) => !current)}
-              className={`flex h-[26px] w-full items-center justify-between rounded border bg-white px-2 text-left font-montserrat text-[12px] font-medium leading-[18px] outline-none transition-colors ${open ? 'border-[#007EA7] ring-2 ring-[#007EA7]/10' : 'border-[#D3E1EC] hover:border-[#A1B6C6]'}`}
-            >
-              <span className={`truncate ${value ? 'text-[#10233A]' : 'text-[#A1B6C6]'}`}>
-                {value || placeholder || 'Select'}
-              </span>
-              <ChevronDown
-                size={16}
-                className={`flex-shrink-0 text-[#7288A3] transition-transform ${open ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {open && (
-              <div
-                role="listbox"
-                aria-label={`${label} options`}
-                className="absolute left-0 right-0 top-[30px] z-50 max-h-[210px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1 shadow-[0_10px_24px_rgba(16,35,58,0.14)]"
-              >
-                {(options ?? ['INV', 'VAT', 'SER']).map((option) => {
-                  const selected = option === value;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      role="option"
-                      aria-selected={selected}
-                      onClick={() => {
-                        updateValue(option);
-                        setOpen(false);
-                      }}
-                      className={`flex min-h-9 w-full items-center gap-3 rounded-md px-3 py-2 text-left font-montserrat text-[12px] font-semibold text-[#10233A] transition-colors ${selected ? 'bg-[#E5EDF9]' : 'hover:bg-[#F8FDFF]'}`}
-                    >
-                      <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-[5px] border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>
-                        {selected && <Check size={12} strokeWidth={2.5} className="text-white" />}
-                      </span>
-                      <span className="truncate">{option}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <SearchableSelect ariaLabel={label} value={value} onChange={updateValue} options={options ?? ['INV', 'VAT', 'SER']} placeholder={placeholder || 'Select'} className="h-[26px] rounded border border-[#D3E1EC] bg-white px-2 pr-7 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]" />
         ) : (
           <input
             type={type}

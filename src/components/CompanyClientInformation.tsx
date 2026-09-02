@@ -611,6 +611,7 @@ function ClientField({
   onChange: (value: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [customOptions, setCustomOptions] = useState<string[]>([]);
   const [addingOption, setAddingOption] = useState(false);
   const [newOption, setNewOption] = useState("");
@@ -633,6 +634,9 @@ function ClientField({
       ...customOptions,
     ]),
   ).filter((option) => option !== "Other");
+  const filteredOptions = visibleOptions.filter((option) =>
+    option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
   const addOption = () => {
     const nextOption = newOption.trim();
     if (!nextOption) return;
@@ -659,16 +663,20 @@ function ClientField({
       <span className="relative flex h-[42px] items-center">
         {field.type === "select" ? (
           <span className="relative block h-[42px] w-full">
-            <button
-              type="button"
+            <input
+              role="combobox"
               aria-label={field.label}
               aria-required={required}
-              aria-haspopup="listbox"
               aria-expanded={isOpen}
-              onClick={() => setIsOpen((current) => !current)}
-              className={`${controlClass} flex items-center justify-between pr-3 text-left`}
-            >
-              <span className="truncate">{field.value}</span>
+              value={isOpen ? query : field.value}
+              placeholder="Select"
+              autoComplete="off"
+              onFocus={(event) => { setQuery(""); setIsOpen(true); event.currentTarget.select(); }}
+              onClick={() => setIsOpen(true)}
+              onChange={(event) => { setQuery(event.target.value); setIsOpen(true); }}
+              className={`${controlClass} pr-10`}
+            />
+            <button type="button" tabIndex={-1} aria-label={`Open ${optionNameLower} options`} onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(""); setIsOpen((current) => !current); }} className="absolute right-0 top-0 flex h-[42px] w-10 items-center justify-center text-[#7288A3]">
               <ChevronDown
                 size={16}
                 className={`flex-shrink-0 text-[#7288A3] transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -680,7 +688,7 @@ function ClientField({
                 aria-label={`${field.label} options`}
                 className="absolute left-0 top-[46px] z-30 block max-h-60 w-full overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]"
               >
-                {visibleOptions.map((option) => {
+                {filteredOptions.map((option) => {
                   const selected = option === field.value;
                   return (
                     <button
@@ -691,6 +699,7 @@ function ClientField({
                       onClick={() => {
                         onChange(option);
                         setIsOpen(false);
+                        setQuery("");
                       }}
                       className={`flex h-9 w-full items-center gap-2 rounded-md px-2 text-left transition-colors ${selected ? "bg-[#F0F7FA]" : "hover:bg-[#F7FBFC]"}`}
                     >
