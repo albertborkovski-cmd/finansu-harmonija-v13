@@ -6,7 +6,13 @@ import type { AccessMap } from '../lib/accessControl';
 import { PageHeader } from './PageHeader';
 import CompanyBreadcrumb from './CompanyBreadcrumb';
 import { SystemBreadcrumb } from './SystemNavigation';
-import type { UploadedDocumentsGroup } from './UploadedDocumentsView';
+import {
+  matchesUploadedDateFilter,
+  prepareUploadedDocuments,
+  uploadedStatus,
+  uploadedStatusGroup,
+  type UploadedDocumentsGroup,
+} from '../lib/uploadedDocuments';
 
 type OcrAdditionalInformation = {
   departmentCode: string;
@@ -42,31 +48,10 @@ const EMPTY_OCR_ADDITIONAL_INFORMATION: OcrAdditionalInformation = {
   duplicatesAccepted: false,
 };
 
-const PROCESSED_STATUSES = new Set([
-  'paid',
-  'accepted',
-  'processed',
-  'completed',
-  'transferred',
-]);
-
-const ATTENTION_STATUSES = new Set([
-  'rejected',
-  'overdue',
-  'exceptional',
-  'exception',
-  'needs info',
-  'provide additional',
-  'provide additional data',
-  'duplicate error',
-  'dublicate error',
-  'duplicate',
-]);
-
 function documentAnalyticsCategory(document: DbDocument): DashboardAnalyticsCategory {
-  const status = (document.status || '').trim().toLowerCase();
-  if (PROCESSED_STATUSES.has(status)) return 'processed';
-  if (ATTENTION_STATUSES.has(status)) return 'attention';
+  const group = uploadedStatusGroup(uploadedStatus(document));
+  if (group === 'Processed') return 'processed';
+  if (group === 'Needs attention') return 'attention';
   return 'processing';
 }
 
@@ -74,7 +59,7 @@ function dashboardDocumentTimestamp(document: DbDocument): number {
   const createdAt = Date.parse(document.created_at || '');
   if (Number.isFinite(createdAt)) return createdAt;
 
-  const dateParts = (document.receive_date || '').match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  const dateParts = (document.receive_date || '').match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
   if (!dateParts) return 0;
   return new Date(Number(dateParts[3]), Number(dateParts[2]) - 1, Number(dateParts[1])).getTime();
 }
@@ -475,7 +460,9 @@ export default function DashboardView({
       supabase.from('documents').select('*'),
     ]);
     const allCompanyRows = (companyResult.data as unknown as Company[] | null) ?? [];
-    const allDocumentRows = (documentResult.data as unknown as DbDocument[] | null) ?? [];
+    const allDocumentRows = prepareUploadedDocuments(
+      (documentResult.data as unknown as DbDocument[] | null) ?? [],
+    ).documents;
     const scopedCompanies = allCompanies
       ? allCompanyRows
       : allCompanyRows.filter((company) =>
@@ -722,9 +709,11 @@ export default function DashboardView({
   const expenseData = globalStats.expenseByYear[activeYear3] ?? Array(12).fill(0);
   const revenueData = globalStats.incomeByYear[activeYear5] ?? Array(12).fill(0);
   const expData6 = globalStats.expenseByYear[activeYear6] ?? Array(12).fill(0);
-  const newestDashboardDocuments = [...dashboardDocuments].sort(
-    (left, right) => dashboardDocumentTimestamp(right) - dashboardDocumentTimestamp(left),
-  );
+  const newestDashboardDocuments = dashboardDocuments
+    .filter((document) => matchesUploadedDateFilter(document, '30'))
+    .sort(
+      (left, right) => dashboardDocumentTimestamp(right) - dashboardDocumentTimestamp(left),
+    );
   const analyticsDocuments = {
     processing: newestDashboardDocuments.filter(
       (document) => documentAnalyticsCategory(document) === 'processing',

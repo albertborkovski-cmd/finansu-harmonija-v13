@@ -10,57 +10,21 @@ import TablePagination from './TablePagination';
 import { ResizeHandle, useColumnResize } from './useColumnResize';
 import { supabase, type Company, type DbDocument } from '../lib/supabase';
 import { getSearchSuggestions, matchesTextSearch } from '../utils/textSearch';
+import {
+  matchesUploadedDateFilter,
+  prepareUploadedDocuments,
+  uploadedDocumentTimestamp as uploadedTimestamp,
+  uploadedStatus,
+  uploadedStatusGroup as statusGroup,
+  type UploadedDocumentsGroup,
+  type UploadedStatus,
+} from '../lib/uploadedDocuments';
 
-type UploadedStatus =
-  | 'Processing'
-  | 'Processed'
-  | 'Organization not identified'
-  | 'Rejected'
-  | 'Exception'
-  | 'Duplicate'
-  | 'Not document';
-
-export type UploadedDocumentsGroup = 'All' | 'Processing' | 'Needs attention' | 'Processed';
+export type { UploadedDocumentsGroup } from '../lib/uploadedDocuments';
 type StatusGroup = UploadedDocumentsGroup;
 type UploadedFilterKey = 'uploaded' | 'organization' | 'status' | 'sourceType' | 'sourceValue';
 
 const PAGE_SIZE = 50;
-const UNASSIGNED_TEST_DOCUMENT_ID = 'uploaded-document-unassigned-test';
-const DUPLICATE_TEST_DOCUMENT_ID = 'uploaded-document-duplicate-test';
-
-const UNASSIGNED_TEST_DOCUMENT: DbDocument = {
-  id: UNASSIGNED_TEST_DOCUMENT_ID,
-  receive_date: '28.08.2026',
-  client_counterparty: 'Organization pending identification',
-  document_type: 'VAT invoice',
-  source: 'Email',
-  total_amount: '0.00 €',
-  due_end_date: '',
-  file_case: 'UNASSIGNED-TEST-001.pdf',
-  order_no: '',
-  number: 'UNASSIGNED-TEST-001',
-  type: 'Expense',
-  document_date: '28.08.2026',
-  document_purpose: 'Organization assignment test',
-  invoice_contract_date: '',
-  operation_date: '28.08.2026',
-  expense_account: '',
-  vat_classifier: '',
-  currency: 'EUR',
-  amount_without_vat: '0.00 €',
-  vat: '0.00 €',
-  vat_percent: '0%',
-  department_code: '',
-  object_project: '',
-  valid_form: 'Organization identification required',
-  accountable_responsible: '',
-  cost_center: '',
-  series: '',
-  status: 'Processing',
-  created_at: '2026-08-28T09:00:00.000Z',
-  created_by: 'sender@example.com',
-  image_url: null,
-};
 
 type UploadedColumnKey = 'document' | 'organization' | 'status' | 'uploaded';
 
@@ -89,15 +53,6 @@ const statusDotColors: Record<UploadedStatus, string> = {
   'Not document': '#7288A3',
 };
 
-function uploadedTimestamp(document: DbDocument) {
-  const created = Date.parse(document.created_at || '');
-  if (Number.isFinite(created)) return created;
-  const parts = (document.receive_date || '').match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
-  return parts
-    ? new Date(Number(parts[3]), Number(parts[2]) - 1, Number(parts[1])).getTime()
-    : 0;
-}
-
 function displayUploadedDate(document: DbDocument) {
   const timestamp = uploadedTimestamp(document);
   if (!timestamp) return document.receive_date || '—';
@@ -108,25 +63,6 @@ function displayUploadedDate(document: DbDocument) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(timestamp));
-}
-
-function uploadedStatus(document: DbDocument): UploadedStatus {
-  const raw = (document.status || '').trim().toLowerCase();
-  if (raw === 'rejected') return 'Rejected';
-  if (raw === 'exception' || raw === 'exceptional') return 'Exception';
-  if (raw.includes('duplicate') || raw.includes('dublicate')) return 'Duplicate';
-  if (raw === 'not document' || raw === 'not documented') return 'Not document';
-  if (!document.company_id) return 'Organization not identified';
-  if (['paid', 'accepted', 'processed', 'completed', 'transferred', 'approved'].includes(raw)) {
-    return 'Processed';
-  }
-  return 'Processing';
-}
-
-function statusGroup(status: UploadedStatus): StatusGroup {
-  if (status === 'Processing') return 'Processing';
-  if (status === 'Processed') return 'Processed';
-  return 'Needs attention';
 }
 
 function statusReason(document: DbDocument, status: UploadedStatus) {
@@ -153,10 +89,6 @@ function uploadedVisibleSearchCells(document: DbDocument, organizationName: stri
     statusReason(document, status),
     displayUploadedDate(document),
   ];
-}
-
-function isUnresolved(status: UploadedStatus) {
-  return status === 'Processing' || statusGroup(status) === 'Needs attention';
 }
 
 export default function UploadedDocumentsView({
@@ -203,34 +135,15 @@ export default function UploadedDocumentsView({
       supabase.from('documents').select('*'),
       supabase.from('companies').select('*'),
     ]);
-    let loadedDocuments = (documentResult.data as unknown as DbDocument[] | null) ?? [];
-    const hasUnassignedDocument = loadedDocuments.some((document) => !document.company_id);
-    const hasTestDocument = loadedDocuments.some((document) => document.id === UNASSIGNED_TEST_DOCUMENT_ID);
-    if (!hasUnassignedDocument && !hasTestDocument) {
-      await supabase.from('documents').upsert({ ...UNASSIGNED_TEST_DOCUMENT }, { onConflict: 'id' });
-      loadedDocuments = [UNASSIGNED_TEST_DOCUMENT, ...loadedDocuments];
-    }
-    const hasDuplicateTestDocument = loadedDocuments.some((document) => document.id === DUPLICATE_TEST_DOCUMENT_ID);
-    if (!hasDuplicateTestDocument) {
-      const duplicateSource = loadedDocuments.find((document) => (
-        document.id !== UNASSIGNED_TEST_DOCUMENT_ID &&
-        document.id !== DUPLICATE_TEST_DOCUMENT_ID &&
-        !document.status?.toLowerCase().includes('duplicate') &&
-        Boolean(document.company_id)
-      ));
-      if (duplicateSource) {
-        const duplicateTestDocument: DbDocument = {
-          ...duplicateSource,
-          id: DUPLICATE_TEST_DOCUMENT_ID,
-          status: 'Duplicate',
-          created_at: '2026-08-28T10:00:00.000Z',
-          created_by: 'duplicate-detection@meso.lt',
-          valid_form: 'A matching original document was detected.',
-        };
-        await supabase.from('documents').upsert({ ...duplicateTestDocument }, { onConflict: 'id' });
-        loadedDocuments = [duplicateTestDocument, ...loadedDocuments];
-      }
-    }
+    const preparedDocuments = prepareUploadedDocuments(
+      (documentResult.data as unknown as DbDocument[] | null) ?? [],
+    );
+    await Promise.all(
+      preparedDocuments.generated.map((document) =>
+        supabase.from('documents').upsert({ ...document }, { onConflict: 'id' }),
+      ),
+    );
+    const loadedDocuments = preparedDocuments.documents;
     setDocuments(loadedDocuments);
     setOrganizations((companyResult.data as unknown as Company[] | null) ?? []);
     setLoading(false);
@@ -275,9 +188,6 @@ export default function UploadedDocumentsView({
   );
 
   const filteredDocuments = useMemo(() => {
-    const cutoff = dateFilter === 'all'
-      ? 0
-      : Date.now() - Number(dateFilter || 30) * 24 * 60 * 60 * 1000;
     const normalizedDocument = documentFilter.trim().toLowerCase();
     const normalizedOrganization = organizationFilter.trim().toLowerCase();
     const normalizedSourceValue = sourceValueFilter.trim().toLowerCase();
@@ -288,7 +198,7 @@ export default function UploadedDocumentsView({
         const status = uploadedStatus(document);
         const group = statusGroup(status);
         if (activeGroup !== 'All' && group !== activeGroup) return false;
-        if (!isUnresolved(status) && cutoff && uploadedTimestamp(document) < cutoff) return false;
+        if (!matchesUploadedDateFilter(document, dateFilter)) return false;
         const organizationName = organizationNames.get(document.company_id || '') || 'Organization not identified';
         if (normalizedDocument && !matchesTextSearch(uploadedVisibleSearchCells(document, organizationName), documentFilter)) return false;
         if (normalizedOrganization && !organizationName.toLowerCase().includes(normalizedOrganization)) return false;
