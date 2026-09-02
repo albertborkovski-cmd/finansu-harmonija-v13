@@ -101,7 +101,7 @@ export default function LoginPage({ onLogin, onLoginFailed }: LoginPageProps) {
   return (
     <div className="flex min-h-screen flex-col bg-[#FCFCFD] px-8 pb-4 pt-8">
       <main className="flex w-full flex-1 items-center justify-center">
-        <form className="w-full max-w-[368px] flex flex-col items-center gap-12" onSubmit={handleSubmit}>
+        <form className="flex w-[368px] max-w-full flex-col items-center gap-12" onSubmit={handleSubmit}>
         {/* Logo */}
         <img
           src={`${import.meta.env.BASE_URL}image.png`}
