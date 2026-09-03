@@ -52,6 +52,8 @@ import {
   type AppSession,
 } from "../lib/accessControl";
 import { userProfileStorageKey } from "../lib/currentUser";
+import { useAttentionNotifications } from "../hooks/useAttentionNotifications";
+import type { NotificationTab } from "../lib/notifications";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -115,6 +117,8 @@ function ReadOnlyBoundary({
 }
 
 export default function Dashboard({ onLogout, session }: DashboardProps) {
+  const attentionNotifications = useAttentionNotifications();
+  const [notificationTarget, setNotificationTarget] = useState<{ tab: NotificationTab; query: string }>({ tab: "notifications", query: "" });
   const [isMenuExpanded, setIsMenuExpanded] = useState(true);
   const [activeMenu, setActiveMenu] = useState(() => firstAccessibleMenu(session));
   const [uploadedDocumentsGroup, setUploadedDocumentsGroup] =
@@ -305,6 +309,7 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
   }, [activeMenu, session]);
 
   const handleMenuClick = (menu: string) => {
+    if (menu === "notifications") setNotificationTarget({ tab: "notifications", query: "" });
     if (menu !== "profile" && !canViewMenu(session, menu)) return;
     const targetMenu =
       menu === "ocr"
@@ -523,6 +528,11 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
         <DashboardView
           clientName="All companies"
           allCompanies
+          attentionNotifications={canViewMenu(session, "notifications") ? attentionNotifications : undefined}
+          onOpenNotifications={canViewMenu(session, "notifications") ? (tab = "notifications", query = "") => {
+            setNotificationTarget({ tab, query });
+            setActiveMenu("notifications");
+          } : undefined}
           roleNames={session.roleNames}
           access={session.access}
           onOpenDocument={openDocumentInOrganization}
@@ -541,7 +551,7 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
       );
     if (activeMenu === "messages")
       return <ChatsView currentUserName={currentUserName} conversation={selectedChat} />;
-    if (activeMenu === "notifications") return <NotificationsView />;
+    if (activeMenu === "notifications") return <NotificationsView key={`${notificationTarget.tab}:${notificationTarget.query}`} initialTab={notificationTarget.tab} initialQuery={notificationTarget.query} />;
     if (activeMenu === "info") return <HelpFaqView />;
     const settingsSections = {
       "settings-internal-roles": {
@@ -701,6 +711,7 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
     <div className="flex h-screen overflow-hidden">
       <div className="flex-shrink-0 overflow-y-auto">
         <Sidebar
+          notificationCount={attentionNotifications.length}
           isExpanded={isMenuExpanded}
           onToggle={() => setIsMenuExpanded(!isMenuExpanded)}
           activeMenu={activeMenu}

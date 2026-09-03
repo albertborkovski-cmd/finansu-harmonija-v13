@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 interface SidebarProps {
+  notificationCount?: number;
   isExpanded: boolean;
   onToggle: () => void;
   activeMenu: string;
@@ -195,6 +196,7 @@ function StepperDot({
 }
 
 export default function Sidebar({
+  notificationCount = 0,
   isExpanded,
   onToggle,
   activeMenu,
@@ -406,10 +408,14 @@ export default function Sidebar({
                           {item.label}
                         </span>
                       </div>
-                      <ChevronDown
+                      {item.id === "notifications" && notificationCount > 0 ? (
+                        <span aria-label={`${notificationCount} active notifications and reminders`} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E34242] px-1.5 font-montserrat text-[11px] font-semibold leading-5 text-white">
+                          {notificationCount}
+                        </span>
+                      ) : <ChevronDown
                         size={16}
                         className={`flex-shrink-0 transition-transform ${hasDropdown ? "opacity-100" : "opacity-0"} ${isActive ? "text-white" : "text-[#10233A]"} ${showAllDocumentsSub || showReviewSub || showAdminSub || showSettingsSub ? "rotate-180" : ""}`}
-                      />
+                      />}
                     </button>
                   ) : (
                     <button

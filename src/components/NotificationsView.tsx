@@ -14,97 +14,7 @@ import { matchesTextSearch } from "../utils/textSearch";
 import { usePersistentState } from "../hooks/usePersistentState";
 import SystemAddFilters from "./SystemAddFilters";
 
-type Tab = "notifications" | "reminders";
-
-interface NotificationRow {
-  id: string;
-  name: string;
-  type: string;
-  message: string;
-  status: "Active" | "Inactive";
-}
-
-interface ReminderRow {
-  id: string;
-  name: string;
-  type: string;
-  daysTillRemind: string;
-  message: string;
-  status: "Active" | "Inactive";
-}
-
-const SAMPLE_NOTIFICATIONS: NotificationRow[] = [
-  {
-    id: "1",
-    name: "Payment received",
-    type: "Transaction",
-    message: "Your payment of $250 has been processed successfully",
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "New user registered",
-    type: "System",
-    message: "A new user has signed up for the platform",
-    status: "Active",
-  },
-  {
-    id: "3",
-    name: "Invoice overdue",
-    type: "Billing",
-    message: "Invoice #1042 is overdue by 5 days",
-    status: "Active",
-  },
-  {
-    id: "4",
-    name: "API limit warning",
-    type: "System",
-    message: "API usage has reached 85% of monthly limit",
-    status: "Inactive",
-  },
-  {
-    id: "5",
-    name: "Document uploaded",
-    type: "Document",
-    message: "New document uploaded to project workspace",
-    status: "Active",
-  },
-];
-
-const SAMPLE_REMINDERS: ReminderRow[] = [
-  {
-    id: "1",
-    name: "Monthly report",
-    type: "Scheduled",
-    daysTillRemind: "3",
-    message: "Generate and send monthly financial report",
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "License renewal",
-    type: "Deadline",
-    daysTillRemind: "14",
-    message: "Renew software licenses before expiration",
-    status: "Active",
-  },
-  {
-    id: "3",
-    name: "Team standup",
-    type: "Recurring",
-    daysTillRemind: "1",
-    message: "Daily team standup meeting at 9:00 AM",
-    status: "Active",
-  },
-  {
-    id: "4",
-    name: "Backup verification",
-    type: "Maintenance",
-    daysTillRemind: "7",
-    message: "Verify database backup integrity",
-    status: "Inactive",
-  },
-];
+import { SAMPLE_NOTIFICATIONS, SAMPLE_REMINDERS, type NotificationRow, type ReminderRow, type NotificationTab as Tab } from "../lib/notifications";
 
 const NOTIF_INITIAL_COLUMNS: ColConfig[] = [
   { key: "name", label: "Name", width: 280, visible: true },
@@ -132,8 +42,8 @@ type PanelMode =
   | "add-reminder"
   | "edit-reminder";
 
-export default function NotificationsView() {
-  const [activeTab, setActiveTab] = useState<Tab>("notifications");
+export default function NotificationsView({ initialTab = "notifications", initialQuery = "" }: { initialTab?: Tab; initialQuery?: string }) {
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [notificationRows, setNotificationRows] = usePersistentState<
     NotificationRow[]
   >("finansu-harmonija:v7:notifications", SAMPLE_NOTIFICATIONS);
@@ -141,7 +51,7 @@ export default function NotificationsView() {
     "finansu-harmonija:v7:reminders",
     SAMPLE_REMINDERS,
   );
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [additionalFilters, setAdditionalFilters] = useState<
     Record<string, string[]>
   >({});
@@ -293,6 +203,7 @@ export default function NotificationsView() {
         ...current,
         {
           id: `notification-${Date.now()}`,
+          createdAt: new Date().toISOString(),
           name: formName.trim(),
           type: formType,
           message: formDescription,
@@ -319,6 +230,7 @@ export default function NotificationsView() {
         ...current,
         {
           id: `reminder-${Date.now()}`,
+          createdAt: new Date().toISOString(),
           name: formName.trim(),
           type: formType,
           daysTillRemind: formDaysTillRemind,

@@ -6,6 +6,8 @@ import type { AccessMap } from '../lib/accessControl';
 import { PageHeader } from './PageHeader';
 import CompanyBreadcrumb from './CompanyBreadcrumb';
 import { SystemBreadcrumb } from './SystemNavigation';
+import DashboardAttention from './DashboardAttention';
+import type { AttentionNotification, NotificationTab } from '../lib/notifications';
 import {
   matchesUploadedDateFilter,
   prepareUploadedDocuments,
@@ -355,6 +357,8 @@ export default function DashboardView({
   allCompanies = false,
   onOpenDocument,
   onOpenUploadedDocuments,
+  attentionNotifications,
+  onOpenNotifications,
 }: {
   companyId?: string;
   clientName?: string;
@@ -363,6 +367,8 @@ export default function DashboardView({
   access?: AccessMap;
   onOpenDocument?: (document: DbDocument) => void;
   onOpenUploadedDocuments?: (group: UploadedDocumentsGroup) => void;
+  attentionNotifications?: AttentionNotification[];
+  onOpenNotifications?: (tab?: NotificationTab, query?: string) => void;
 }) {
   const [activeMonth, setActiveMonth] = useState('Jan');
   const [activeYear3, setActiveYear3] = useState('2025');
@@ -1034,6 +1040,9 @@ export default function DashboardView({
           )}
 
           {/* ── Card 2: assigned organizations / VAT overview ───────────── */}
+          {allCompanies && attentionNotifications && onOpenNotifications && (
+            <DashboardAttention rows={attentionNotifications} onOpen={onOpenNotifications} />
+          )}
           {!allCompanies && (
           <Card>
             <div className="flex flex-col gap-2">
