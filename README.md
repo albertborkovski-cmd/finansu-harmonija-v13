@@ -1,24 +1,18 @@
-# Finansų harmonija V12
+# Finansų harmonija V13
 
-Užfiksuota V12 testavimo versija. Tolesni pakeitimai atliekami atskirame V13 kataloge, V12 nebekeičiama.
-
-## Testavimas internete
-
-- Programa: https://albertborkovski-cmd.github.io/finansu-harmonija-v12/
-- Kodas: https://github.com/albertborkovski-cmd/finansu-harmonija-v12
-- Užfiksuotas leidimas: Git žyma `v12`.
-
-Tai demonstracinis frontend prototipas, ne produkcinė apskaitos sistema. Prisijungimas tikrina įvedimo formatą, bet neatlieka tikro slaptažodžio patikrinimo. Galima įvesti testinį el. paštą ir bent 6 simbolių slaptažodį su didžiąja raide bei specialiuoju simboliu. Naujas el. paštas gauna peržiūros teises.
-
-GitHub Pages versijos duomenys ir pakeitimai saugomi testuotojo naršyklėje. Skirtingi testuotojai nesidalija viena duomenų baze. Nekelkite tikrų konfidencialių dokumentų ir nenaudokite tikro slaptažodžio.
+Aktyvi tobulinimo versija, sukurta iš užfiksuotos V12 kopijos (`d50ff9c`, žyma `v12`). Tolesni pakeitimai atliekami tik šiame V13 kataloge.
 
 ## Paleidimas
 
 ```bash
-npm install
-npm run dev -- --port 5193
+npm ci
+npm run dev
 ```
 
-Vietinis V12 adresas: <http://127.0.0.1:5193/>
+Vietinis V13 adresas: http://127.0.0.1:5194/
 
-V11 ir ankstesnės versijos lieka nepakeistos.
+V12 testavimo nuoroda: https://albertborkovski-cmd.github.io/finansu-harmonija-v12/
+
+V12 lieka nekintama. Ši V13 kopija neturi V12 GitHub nuotolinės saugyklos, kad pakeitimai nebūtų netyčia įkelti į V12.
+
+Tai demonstracinis prototipas su demonstraciniu prisijungimu, ne produkcinė sistema. Nenaudokite tikrų slaptažodžių ar konfidencialių dokumentų. Atskiro adreso naršyklės nustatymai ir duomenys yra atskiri.
