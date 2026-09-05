@@ -276,20 +276,15 @@ export default function Sidebar({
     <div className="flex">
       {/* Blue strip */}
       <div className="w-12 min-h-screen bg-[#E6F2F6] flex flex-col justify-between items-center py-4 z-10">
-        <div className="group relative flex h-8 w-12 items-center justify-center">
+        <div className="flex h-8 w-12 items-center justify-center">
           <button
             onClick={() => onMenuClick("profile")}
             aria-label="Profile settings"
+            title="Profile settings"
             className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#D0E8EF] transition-colors"
           >
             <User size={16} className="text-[#7288A3]" />
           </button>
-          <span
-            role="tooltip"
-            className="pointer-events-none absolute left-[44px] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-md bg-[#10233A] px-2.5 py-1.5 font-montserrat text-[12px] font-medium leading-[18px] text-white opacity-0 shadow-lg transition-opacity duration-100 group-hover:opacity-100"
-          >
-            Profile settings
-          </span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
