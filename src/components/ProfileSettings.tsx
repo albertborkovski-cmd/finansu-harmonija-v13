@@ -353,6 +353,7 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
     edsPassword: internalUser.edsPassword,
   }));
   const [integrationSaved, setIntegrationSaved] = useState(false);
+  const [notificationSaved, setNotificationSaved] = useState(false);
   const [profileAudience, setProfileAudience] = useState<SettingsAudience>(() =>
     loadLinkedDirectoryUsers('Internal users').some(
       directoryUser => isDirectoryEmailMatch(directoryUser.email, normalizedUserEmail),
@@ -406,11 +407,13 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
   const [activityLogExpanded, setActivityLogExpanded] = useState(false);
   const [loginHistoryExpanded, setLoginHistoryExpanded] = useState(false);
   const [documentActivityView, setDocumentActivityView] = useState<'created' | 'edited' | null>(null);
-  const [reportNotifications, setReportNotifications] = usePersistentState('finansu-harmonija:v7:profile-report-notifications', true);
-  const [notificationPreferences, setNotificationPreferences] = usePersistentState<ProfileNotificationPreferences>(
+  const [savedReportNotifications, setSavedReportNotifications] = usePersistentState('finansu-harmonija:v7:profile-report-notifications', true);
+  const [savedNotificationPreferences, setSavedNotificationPreferences] = usePersistentState<ProfileNotificationPreferences>(
     'finansu-harmonija:v12:profile-notification-preferences',
     createDefaultNotificationPreferences,
   );
+  const [reportNotifications, setReportNotifications] = useState(savedReportNotifications);
+  const [notificationPreferences, setNotificationPreferences] = useState(savedNotificationPreferences);
 
   // Unsubscribe modal state
   const [showUnsubscribeModal, setShowUnsubscribeModal] = useState(false);
@@ -610,6 +613,17 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
     integrationDraft.sodraPassword !== internalUser.sodraPassword ||
     integrationDraft.edsUser !== internalUser.edsUser ||
     integrationDraft.edsPassword !== internalUser.edsPassword;
+
+  const hasNotificationChanges =
+    reportNotifications !== savedReportNotifications ||
+    JSON.stringify(notificationPreferences) !== JSON.stringify(savedNotificationPreferences);
+
+  const handleSaveNotifications = () => {
+    setSavedReportNotifications(reportNotifications);
+    setSavedNotificationPreferences(notificationPreferences);
+    setNotificationSaved(true);
+    setTimeout(() => setNotificationSaved(false), 3000);
+  };
 
   // Handle notification toggle - show confirmation when trying to disable
   const handleReportNotificationsToggle = () => {
@@ -888,6 +902,12 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
         <div className="w-fit px-4 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
           <Check size={16} className="text-green-600" />
           <span className="text-sm text-green-700">Integration settings saved successfully</span>
+        </div>
+      )}
+      {notificationSaved && (
+        <div className="w-fit px-4 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+          <Check size={16} className="text-green-600" />
+          <span className="text-sm text-green-700">Notification settings saved successfully</span>
         </div>
       )}
 
@@ -1500,6 +1520,14 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
                 })}
               </div>
             )}
+
+            <SaveButton
+              onClick={handleSaveNotifications}
+              disabled={!hasNotificationChanges}
+              className="w-full"
+            >
+              Save
+            </SaveButton>
           </div>
         </div>
       </div>
