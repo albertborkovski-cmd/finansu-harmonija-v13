@@ -280,10 +280,16 @@ export default function Sidebar({
           <button
             onClick={() => onMenuClick("profile")}
             aria-label="Profile settings"
+            aria-current={activeMenu === "profile" ? "page" : undefined}
             title="Profile settings"
-            className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#D0E8EF] transition-colors"
+            className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${
+              activeMenu === "profile" ? "bg-[#007EA7]" : "hover:bg-[#D0E8EF]"
+            }`}
           >
-            <User size={16} className="text-[#7288A3]" />
+            <User
+              size={16}
+              className={activeMenu === "profile" ? "text-white" : "text-[#7288A3]"}
+            />
           </button>
         </div>
 
