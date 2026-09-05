@@ -779,7 +779,7 @@ export default function DashboardView({
   const pendingAmount = statusAmount('Pending', 'Submitted', 'Draft');
   const overdueAmount = statusAmount('Overdue');
   return (
-    <div className="dashboard-view relative flex min-h-full min-w-0 flex-col gap-8 bg-white px-4 py-14 sm:px-8 lg:px-[72px]">
+    <div className={`dashboard-view relative flex min-h-full min-w-0 flex-col bg-white px-4 sm:px-8 lg:px-[72px] ${allCompanies ? 'gap-5 py-6 lg:py-8' : 'gap-8 py-14'}`}>
       <PageHeader title="Dashboard" />
       {allCompanies ? (
         <SystemBreadcrumb items={["Dashboard"]} />
@@ -836,10 +836,10 @@ export default function DashboardView({
         )}
 
         {/* 2×3 card grid */}
-        <div className="dashboard-card-grid grid grid-cols-1 items-start gap-5">
+        <div className={`dashboard-card-grid grid grid-cols-1 items-start ${allCompanies ? 'gap-3' : 'gap-5'}`}>
 
           {/* ── Card 1: Uploading documents ────────────────────────────── */}
-          <Card className={allCompanies ? 'col-span-full w-full' : ''}>
+          <Card className={allCompanies ? 'col-span-full w-full !gap-3 !p-4' : ''}>
             <div className="flex flex-col gap-2">
               <CardHeader
                 title="Uploading documents"
@@ -908,7 +908,7 @@ export default function DashboardView({
                 setDraggingFiles(false);
                 void uploadForOcr(Array.from(event.dataTransfer.files));
               }}
-              className={`flex h-[156px] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-5 transition-colors ${draggingFiles ? 'border-[#007EA7] bg-[#E6F2F6]' : 'border-[#AFC3D2] bg-[#E6F2F6]'}`}
+              className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed transition-colors ${allCompanies ? 'h-[104px] p-3' : 'h-[156px] p-5'} ${draggingFiles ? 'border-[#007EA7] bg-[#E6F2F6]' : 'border-[#AFC3D2] bg-[#E6F2F6]'}`}
             >
               <Upload size={28} className="text-[#7288A3]" />
               <p className="text-center font-montserrat text-[13px] font-medium leading-5 text-[#7288A3]">
@@ -987,11 +987,11 @@ export default function DashboardView({
                 ].map((item) => (
                   <article
                     key={item.key}
-                    className="relative flex min-h-[208px] min-w-0 flex-col px-6 pb-5 pt-6"
+                    className="relative flex min-h-[132px] min-w-0 flex-col px-5 pb-3 pt-4"
                   >
-                    <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex min-w-0 items-start gap-3">
                       <span
-                        className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full"
+                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
                         style={{ color: item.color, backgroundColor: item.background }}
                       >
                         {item.icon}
@@ -1000,7 +1000,7 @@ export default function DashboardView({
                         <h2 className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">
                           {item.title}
                         </h2>
-                        <div className="mt-1 font-montserrat text-[32px] font-semibold leading-9 text-[#10233A]">
+                        <div className="font-montserrat text-[26px] font-semibold leading-8 text-[#10233A]">
                           {item.count}
                         </div>
                         <p className="mt-1 whitespace-normal font-montserrat text-[12px] font-medium leading-5 text-[#7288A3]">
@@ -1011,7 +1011,7 @@ export default function DashboardView({
                     <button
                       type="button"
                       onClick={() => openAnalyticsDocuments(item.key)}
-                      className="mt-5 flex h-10 w-full items-center gap-2 border-t border-[#E1EBF2] pt-3 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
+                      className="mt-2 flex h-8 w-full items-center gap-2 border-t border-[#E1EBF2] pt-2 font-montserrat text-[12px] font-semibold text-[#007EA7] transition-colors hover:text-[#006B8E]"
                     >
                       View all documents
                     </button>
@@ -1023,7 +1023,7 @@ export default function DashboardView({
                   </article>
                 ))}
               </div>
-              <div className="flex min-h-12 items-center justify-between gap-4 border-t border-[#E1EBF2] bg-[#FCFEFF] px-5 py-2">
+              <div className="flex min-h-10 items-center justify-between gap-4 border-t border-[#E1EBF2] bg-[#FCFEFF] px-5 py-1.5">
                 <div className="flex items-center gap-2 font-montserrat text-[11px] font-medium text-[#7288A3]">
                   <Info size={15} />
                   Based on current documents
