@@ -81,7 +81,7 @@ const PROFILE_SETTINGS_TABS: Array<{
 }> = [
   { id: 'profile', label: 'Profile' },
   { id: 'integrations', label: 'Integrations' },
-  { id: 'security', label: 'Security' },
+  { id: 'security', label: 'Authorization notifications' },
   { id: 'notifications', label: 'Notifications' },
   { id: 'accessActivity', label: 'Access & activity' },
 ];
@@ -1262,7 +1262,7 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
         <div className={`${activeTab === 'security' ? '' : 'hidden'} min-w-0 bg-white border border-[#D3E1EC] rounded-lg p-5 sm:p-6`}>
           <div className="flex flex-col gap-6">
             <h2 className="text-[22px] font-semibold text-[#10233A]">
-              Security
+              Verification methods
             </h2>
 
             {/* Authorization notifications */}
