@@ -276,12 +276,12 @@ export default function Sidebar({
     <div className="flex">
       {/* Blue strip */}
       <div className="w-12 min-h-screen bg-[#E6F2F6] flex flex-col justify-between items-center py-4 z-10">
-        <div className="flex h-8 w-12 items-center justify-center">
+        <div className="group relative flex h-8 w-12 items-center justify-center">
           <button
             onClick={() => onMenuClick("profile")}
             aria-label="Profile settings"
             aria-current={activeMenu === "profile" ? "page" : undefined}
-            title="Profile settings"
+            aria-describedby="profile-settings-tooltip"
             className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${
               activeMenu === "profile" ? "bg-[#007EA7]" : "hover:bg-[#D0E8EF]"
             }`}
@@ -291,17 +291,33 @@ export default function Sidebar({
               className={activeMenu === "profile" ? "text-white" : "text-[#7288A3]"}
             />
           </button>
+          <span
+            id="profile-settings-tooltip"
+            role="tooltip"
+            className="pointer-events-none invisible absolute left-[44px] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-lg border border-[#D3E1EC] bg-white px-3 py-2 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A] opacity-0 shadow-[0_8px_24px_rgba(16,35,58,0.14)] transition-opacity duration-75 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+          >
+            Profile settings
+          </span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={onToggle}
-            title="COLLAPSE"
-            aria-label="COLLAPSE"
-            className="w-12 h-8 flex items-center justify-center hover:bg-[#D0E8EF] rounded transition-colors"
-          >
-            <Menu size={16} className="text-[#006080]" />
-          </button>
+          <div className="group relative flex h-8 w-12 items-center justify-center">
+            <button
+              onClick={onToggle}
+              aria-label="Collapse sidebar"
+              aria-describedby="collapse-sidebar-tooltip"
+              className="w-12 h-8 flex items-center justify-center hover:bg-[#D0E8EF] rounded transition-colors"
+            >
+              <Menu size={16} className="text-[#006080]" />
+            </button>
+            <span
+              id="collapse-sidebar-tooltip"
+              role="tooltip"
+              className="pointer-events-none invisible absolute left-[44px] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-lg border border-[#D3E1EC] bg-white px-3 py-2 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A] opacity-0 shadow-[0_8px_24px_rgba(16,35,58,0.14)] transition-opacity duration-75 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+            >
+              Collapse
+            </span>
+          </div>
           <button
             className="w-12 h-8 flex items-center justify-center hover:bg-[#D0E8EF] rounded transition-colors"
             title="Logout"

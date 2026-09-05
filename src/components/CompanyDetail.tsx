@@ -106,26 +106,42 @@ export default function CompanyDetail({ company, onBack, onLogout, onOpenProfile
     <div className="flex h-screen overflow-hidden">
       {/* Blue strip */}
       <div className="w-12 min-h-screen bg-[#E6F2F6] flex flex-col justify-between items-center py-4 z-10 flex-shrink-0">
-        <div className="flex h-8 w-12 items-center justify-center">
+        <div className="group relative flex h-8 w-12 items-center justify-center">
           <button
             type="button"
             onClick={onOpenProfile}
             aria-label="Profile settings"
-            title="Profile settings"
+            aria-describedby="company-profile-settings-tooltip"
             className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#D0E8EF] transition-colors"
           >
             <User size={16} className="text-[#7288A3]" />
           </button>
+          <span
+            id="company-profile-settings-tooltip"
+            role="tooltip"
+            className="pointer-events-none invisible absolute left-[44px] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-lg border border-[#D3E1EC] bg-white px-3 py-2 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A] opacity-0 shadow-[0_8px_24px_rgba(16,35,58,0.14)] transition-opacity duration-75 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+          >
+            Profile settings
+          </span>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => setIsExpanded(v => !v)}
-            title="COLLAPSE"
-            aria-label="COLLAPSE"
-            className="w-12 h-8 flex items-center justify-center hover:bg-[#D0E8EF] rounded transition-colors"
-          >
-            <Menu size={16} className="text-[#006080]" />
-          </button>
+          <div className="group relative flex h-8 w-12 items-center justify-center">
+            <button
+              onClick={() => setIsExpanded(v => !v)}
+              aria-label="Collapse sidebar"
+              aria-describedby="company-collapse-sidebar-tooltip"
+              className="w-12 h-8 flex items-center justify-center hover:bg-[#D0E8EF] rounded transition-colors"
+            >
+              <Menu size={16} className="text-[#006080]" />
+            </button>
+            <span
+              id="company-collapse-sidebar-tooltip"
+              role="tooltip"
+              className="pointer-events-none invisible absolute left-[44px] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-lg border border-[#D3E1EC] bg-white px-3 py-2 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A] opacity-0 shadow-[0_8px_24px_rgba(16,35,58,0.14)] transition-opacity duration-75 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+            >
+              Collapse
+            </span>
+          </div>
           <button onClick={onLogout} className="w-12 h-8 flex items-center justify-center hover:bg-[#D0E8EF] rounded transition-colors" title="Logout">
             <LogOut size={16} className="text-[#006080] rotate-90" />
           </button>
