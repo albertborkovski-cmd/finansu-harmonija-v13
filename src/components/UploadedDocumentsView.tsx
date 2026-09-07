@@ -74,7 +74,7 @@ function statusReason(_document: DbDocument, status: UploadedStatus) {
     return 'This is the only data assignment action allowed in this view.';
   }
   if (status === 'Duplicate') {
-    return 'A link to the existing document record is available.';
+    return 'View original';
   }
   if (status === 'Rejected') {
     return 'The reason is displayed below the status in smaller text.';
@@ -526,11 +526,11 @@ export default function UploadedDocumentsView({
                   <div className="flex h-full items-center justify-center bg-white px-8 text-center font-montserrat text-[14px] text-[#7288A3]">PDF preview is not available in this browser.</div>
                 </object>
               ) : (
-                <div className="flex h-full items-center justify-center">
-                  <div className="flex w-[216px] flex-col items-center gap-3 rounded-lg border-2 border-dashed border-[#D3E1EC] bg-white px-8 py-10">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F7FA]"><Upload size={28} className="text-[#007EA7]" /></div>
-                    <span className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Uploaded document</span>
-                    <span className="max-w-full truncate font-montserrat text-[13px] font-medium leading-5 text-[#7288A3]" title={selectedDocument.file_case || selectedDocument.number || selectedDocument.id}>{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
+                <div className="flex h-full items-center justify-center px-4">
+                  <div className="flex w-full max-w-[304px] flex-col items-center gap-4 rounded-lg border-2 border-dashed border-[#D3E1EC] bg-white px-4 py-8 text-center">
+                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#F0F7FA]"><Upload size={28} className="text-[#007EA7]" /></div>
+                    <span className="w-full whitespace-nowrap text-center font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Uploaded document</span>
+                    <span className="w-full min-w-0 text-center font-montserrat text-[13px] font-medium leading-5 text-[#7288A3] [overflow-wrap:anywhere]" title={selectedDocument.file_case || selectedDocument.number || selectedDocument.id}>{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
                   </div>
                 </div>
               )}
@@ -943,26 +943,23 @@ export default function UploadedDocumentsView({
                   <div className="flex min-w-0 items-center gap-1.5">
                     <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: statusDotColors[status] }} />
                     <span className="flex-shrink-0 font-montserrat text-[12px] font-normal leading-[18px] text-[#10233A]">{status}</span>
-                    {status === 'Duplicate' && duplicateOriginal && (
-                      <>
-                        <span className="flex-shrink-0 font-montserrat text-[12px] text-[#A1B6C6]">·</span>
+                  </div>
+                  {status === 'Duplicate' && duplicateOriginal ? (
                         <button
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
                             void onOpenDocument(duplicateOriginal);
                           }}
-                          className="min-w-0 truncate text-left font-montserrat text-[12px] font-medium leading-[18px] text-[#007EA7] hover:underline"
-                          title={`Open original document ${duplicateOriginal.file_case || duplicateOriginal.number || duplicateOriginal.id}`}
+                          className="block text-left font-montserrat text-[11px] font-normal leading-[14px] text-[#007EA7] hover:underline"
                         >
-                          {duplicateOriginal.file_case || duplicateOriginal.number || duplicateOriginal.id}
+                          View original
                         </button>
-                      </>
-                    )}
-                  </div>
+                  ) : (
                   <span className="block max-w-full truncate font-montserrat text-[11px] font-normal leading-[14px] text-[#7288A3]" title={statusReason(document, status)}>
                     {statusReason(document, status)}
                   </span>
+                  )}
                 </div>
                 <span className="flex-shrink-0 font-montserrat text-[12px] font-normal leading-[18px] text-[#10233A]" style={{ width: columns[3].width }}>{displayUploadedDate(document)}</span>
                 </div>
@@ -1107,7 +1104,11 @@ export default function UploadedDocumentsView({
                 ].map(([label, value]) => (
                   <div key={label}>
                     <dt className="font-montserrat text-[11px] font-semibold text-[#7288A3]">{label}</dt>
-                    <dd className="mt-1 whitespace-normal font-montserrat text-[13px] font-medium leading-5 text-[#10233A]">{value}</dd>
+                    <dd className="mt-1 whitespace-normal font-montserrat text-[13px] font-medium leading-5 text-[#10233A]">
+                      {label === 'Reason' && originalForDuplicate ? (
+                        <button type="button" onClick={() => void onOpenDocument(originalForDuplicate)} className="text-[#007EA7] hover:underline">View original</button>
+                      ) : value}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -1122,9 +1123,6 @@ export default function UploadedDocumentsView({
                 </section>
               )}
 
-              {originalForDuplicate && (
-                <button type="button" onClick={() => void onOpenDocument(originalForDuplicate)} className="mt-6 font-montserrat text-[12px] font-semibold text-[#007EA7]">Open original document</button>
-              )}
             </div>
             <footer className="space-y-3 border-t border-[#D3E1EC] px-6 py-5">
               {uploadedStatus(selectedDocument) === 'Processed' && selectedDocument.company_id && (

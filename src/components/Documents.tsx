@@ -1293,6 +1293,7 @@ interface DocumentsProps {
   documentTypeFilter?: string;
   initialViewDocumentId?: string | null;
   onInitialViewConsumed?: () => void;
+  onInitialViewBack?: () => void;
   onOpenGeneralLedger?: () => void;
   onStartChat?: (context: InvoiceChatContext) => void;
 }
@@ -1348,6 +1349,7 @@ export default function Documents({
   documentTypeFilter = "",
   initialViewDocumentId = null,
   onInitialViewConsumed,
+  onInitialViewBack,
   onOpenGeneralLedger,
   onStartChat,
 }: DocumentsProps) {
@@ -1379,6 +1381,7 @@ export default function Documents({
   const [openDoc, setOpenDoc] = useState<Document | null>(null);
   const [viewDoc, setViewDoc] = useState<Document | null>(null);
   const initialViewHandledRef = useRef(false);
+  const entryDocumentIdRef = useRef(initialViewDocumentId);
   const [viewActionPanel, setViewActionPanel] = useState<
     "send" | "preview" | null
   >(null);
@@ -3188,6 +3191,10 @@ export default function Documents({
             onClose={() => {
               setViewActionPanel(null);
               setViewDoc(null);
+              if (viewDoc.id === entryDocumentIdRef.current) {
+                entryDocumentIdRef.current = null;
+                onInitialViewBack?.();
+              }
             }}
             onCreated={() => undefined}
           />

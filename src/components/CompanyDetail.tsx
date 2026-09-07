@@ -327,7 +327,7 @@ export default function CompanyDetail({ company, onBack, onLogout, onOpenProfile
       <div data-app-main className="relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-white">
         {activeMenu === 'documents' ? (
           activeDocumentsMenu === 'documents'
-            ? <Documents companyId={currentCompany.id} companyName={currentCompany.name} company={currentCompany} generalLedgerName={currentCompany.general_ledger ?? ''} initialViewDocumentId={dashboardDocumentId} onInitialViewConsumed={() => setDashboardDocumentId(null)} onOpenGeneralLedger={openGeneralLedger} onStartChat={onOpenChat} />
+            ? <Documents companyId={currentCompany.id} companyName={currentCompany.name} company={currentCompany} generalLedgerName={currentCompany.general_ledger ?? ''} initialViewDocumentId={dashboardDocumentId} onInitialViewConsumed={() => setDashboardDocumentId(null)} onInitialViewBack={initialDocumentId ? onBack : () => setActiveMenu('overview')} onOpenGeneralLedger={openGeneralLedger} onStartChat={onOpenChat} />
             : activeDocumentsMenu === 'invoices'
               ? <InvoicesView companyId={currentCompany.id} companyName={currentCompany.name} company={currentCompany} onStartChat={onOpenChat} />
               : <AllDocumentsView mode="processed" scope="company" companyName={currentCompany.name} />

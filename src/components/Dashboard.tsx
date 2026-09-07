@@ -443,8 +443,7 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
     openCompany(company, "documents");
   };
 
-  if (selectedCompany) {
-    return (
+  const companyContent = selectedCompany ? (
       <ReadOnlyBoundary readOnly={!session.access.companies.edit}>
         <CompanyDetail
           company={selectedCompany}
@@ -475,8 +474,7 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
           }}
         />
       </ReadOnlyBoundary>
-    );
-  }
+    ) : null;
 
   const renderContent = () => {
     if (securityAccessTarget) {
@@ -708,7 +706,9 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <>
+    {companyContent}
+    <div style={{ display: selectedCompany ? 'none' : undefined }} className="flex h-screen overflow-hidden">
       <div className="flex-shrink-0 overflow-y-auto">
         <Sidebar
           notificationCount={attentionNotifications.length}
@@ -749,5 +749,6 @@ export default function Dashboard({ onLogout, session }: DashboardProps) {
         </ReadOnlyBoundary>
       </div>
     </div>
+    </>
   );
 }
