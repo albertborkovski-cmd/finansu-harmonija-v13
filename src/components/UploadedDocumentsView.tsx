@@ -457,61 +457,84 @@ export default function UploadedDocumentsView({
         />
         <SystemBreadcrumb items={["Uploaded documents", "Assign organization"]} />
 
-        <div className="mx-auto flex w-full max-w-[980px] flex-col gap-6">
-          <section className="rounded-2xl border border-[#D3E1EC] bg-white px-6 py-6 sm:px-8">
-            <h2 className="font-montserrat text-[20px] font-semibold leading-7 text-[#10233A]">Document information</h2>
-            <dl className="mt-6 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
-              {[
-                ['Document', selectedDocument.file_case || selectedDocument.number || selectedDocument.id],
-                ['Source', sourceValue(selectedDocument)],
-                ['Uploaded', displayUploadedDate(selectedDocument)],
-                ['Status', uploadedStatus(selectedDocument)],
-              ].map(([label, value]) => (
-                <div key={label} className="min-w-0">
-                  <dt className="font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3]">{label}</dt>
-                  <dd className="mt-1 truncate font-montserrat text-[14px] font-normal leading-5 text-[#10233A]" title={value}>{value}</dd>
-                </div>
-              ))}
-            </dl>
+        <div className="grid min-h-[720px] overflow-hidden rounded-xl border border-[#D3E1EC] bg-white grid-cols-1 xl:grid-cols-[minmax(560px,1.45fr)_minmax(390px,0.85fr)]">
+          <section className="flex min-h-[560px] min-w-0 flex-col border-b border-[#D3E1EC] xl:min-h-0 xl:border-b-0 xl:border-r">
+            <div className="flex h-14 flex-shrink-0 items-center gap-2 border-b border-[#D3E1EC] px-5">
+              <FileText size={18} className="text-[#007EA7]" />
+              <span className="min-w-0 truncate font-montserrat text-[14px] font-semibold text-[#10233A]">{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
+            </div>
+            <div className="min-h-0 flex-1 bg-[#EEF3F7] p-4">
+              {selectedDocument.image_url && (selectedDocument.image_url.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|tiff?)($|\?)/i.test(selectedDocument.image_url)) ? (
+                <img src={selectedDocument.image_url} alt="Uploaded document" className="h-full w-full object-contain" />
+              ) : selectedDocument.image_url ? (
+                <object data={selectedDocument.image_url} type="application/pdf" aria-label="Uploaded document" className="h-full w-full rounded-lg bg-white">
+                  <div className="flex h-full items-center justify-center bg-white font-montserrat text-[13px] text-[#7288A3]">Document preview is unavailable.</div>
+                </object>
+              ) : (
+                <article className="mx-auto min-h-full w-full max-w-[680px] bg-white px-8 py-10 shadow-sm sm:px-12">
+                  <p className="font-montserrat text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7288A3]">Uploaded document</p>
+                  <h2 className="mt-3 break-words font-montserrat text-[24px] font-semibold leading-8 text-[#10233A]">{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</h2>
+                  <div className="mt-8 border-t border-[#D3E1EC] pt-6">
+                    <p className="font-montserrat text-[12px] text-[#7288A3]">Original file preview</p>
+                    <p className="mt-2 font-montserrat text-[14px] leading-6 text-[#10233A]">The original uploaded file is shown here when a preview is available.</p>
+                  </div>
+                </article>
+              )}
+            </div>
           </section>
 
-          <section className="rounded-2xl border border-[#D3E1EC] bg-white px-6 py-6 sm:px-8">
-            <h2 className="font-montserrat text-[20px] font-semibold leading-7 text-[#10233A]">Organization</h2>
-            <p className="mt-1 font-montserrat text-[12px] font-normal leading-[18px] text-[#7288A3]">Search by organization name or company code, then select one organization.</p>
-            <label className="relative mt-5 block max-w-[520px]">
-              <span className="sr-only">Search organizations</span>
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-              <input
-                autoFocus
-                value={organizationSearch}
-                onChange={(event) => setOrganizationSearch(event.target.value)}
-                placeholder="Search name or company code"
-                className="h-10 w-full rounded-lg border border-[#D3E1EC] bg-white pl-10 pr-3 font-montserrat text-[13px] font-normal text-[#10233A] outline-none transition-colors placeholder:text-[#A1B6C6] focus:border-[#007EA7]"
-              />
-            </label>
-            <div className="mt-4 max-h-[340px] overflow-y-auto rounded-xl border border-[#E5EDF9] p-1.5">
-              {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
-                const selected = selectedOrganizationId === organization.id;
-                return (
-                  <button
-                    key={organization.id}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => setSelectedOrganizationId(organization.id)}
-                    className={`flex min-h-[52px] w-full items-center justify-between gap-4 rounded-lg px-4 py-2 text-left transition-colors ${selected ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate font-montserrat text-[13px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
-                      <span className="mt-0.5 block truncate font-montserrat text-[11px] font-normal leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
-                    </span>
-                    <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>
-                      {selected ? <Check size={12} strokeWidth={3} className="text-white" /> : null}
-                    </span>
-                  </button>
-                );
-              }) : (
-                <div className="flex min-h-24 items-center justify-center px-4 text-center font-montserrat text-[12px] font-normal text-[#7288A3]">No organizations found.</div>
-              )}
+          <section className="flex min-h-0 min-w-0 flex-col">
+            <div className="flex h-14 flex-shrink-0 items-center border-b-2 border-b-[#007EA7] px-6">
+              <span className="font-montserrat text-[13px] font-semibold text-[#007EA7]">EXTRACTED DATA</span>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-5 xl:p-6">
+              <h2 className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Document information</h2>
+              <dl className="mt-4 grid grid-cols-1 gap-3">
+                {[
+                  ['Document type', selectedDocument.document_type || selectedDocument.type || '—'],
+                  ['Document number', selectedDocument.number || '—'],
+                  ['Client / Counterparty', selectedDocument.client_counterparty || '—'],
+                  ['Document date', selectedDocument.document_date || '—'],
+                  ['Due / End date', selectedDocument.due_end_date || '—'],
+                  ['Operation date', selectedDocument.operation_date || '—'],
+                  ['Total amount', selectedDocument.total_amount || '—'],
+                  ['Currency', selectedDocument.currency || '—'],
+                  ['Source', sourceValue(selectedDocument)],
+                  ['Uploaded', displayUploadedDate(selectedDocument)],
+                  ['Status', uploadedStatus(selectedDocument)],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-[#F8FDFF] px-4 py-2.5">
+                    <dt className="font-montserrat text-[11px] font-medium leading-[16px] text-[#7288A3]">{label}</dt>
+                    <dd className="mt-0.5 break-words font-montserrat text-[13px] font-normal leading-[18px] text-[#10233A]">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <div className="mt-7 border-t border-[#D3E1EC] pt-6">
+                <h2 className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Assign organization</h2>
+                <p className="mt-1 font-montserrat text-[11px] font-normal leading-[16px] text-[#7288A3]">Search by organization name or company code.</p>
+                <label className="relative mt-4 block">
+                  <span className="sr-only">Search organizations</span>
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7288A3]" />
+                  <input autoFocus value={organizationSearch} onChange={(event) => setOrganizationSearch(event.target.value)} placeholder="Search name or company code" className="h-10 w-full rounded-lg border border-[#D3E1EC] bg-white pl-10 pr-3 font-montserrat text-[13px] font-normal text-[#10233A] outline-none transition-colors placeholder:text-[#A1B6C6] focus:border-[#007EA7]" />
+                </label>
+                <div className="mt-3 max-h-[260px] overflow-y-auto rounded-xl border border-[#E5EDF9] p-1.5">
+                  {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
+                    const selected = selectedOrganizationId === organization.id;
+                    return (
+                      <button key={organization.id} type="button" aria-pressed={selected} onClick={() => setSelectedOrganizationId(organization.id)} className={`flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${selected ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}>
+                        <span className="min-w-0">
+                          <span className="block truncate font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
+                          <span className="block truncate font-montserrat text-[11px] leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
+                        </span>
+                        <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>{selected ? <Check size={12} strokeWidth={3} className="text-white" /> : null}</span>
+                      </button>
+                    );
+                  }) : (
+                    <div className="flex min-h-20 items-center justify-center px-3 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>
+                  )}
+                </div>
+              </div>
             </div>
           </section>
         </div>
