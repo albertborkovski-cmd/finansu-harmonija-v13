@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, ChevronDown, FileText, Plus, Search, X } from 'lucide-react';
-import { PageHeader } from './PageHeader';
-import { SystemBreadcrumb } from './SystemNavigation';
+import { PageActionButton, PageHeader } from './PageHeader';
+import { HeaderBackButton, SystemBreadcrumb } from './SystemNavigation';
 import ColumnSortButton, { useMultiColumnSort } from './ColumnSortButton';
 import type { ColConfig } from './ColumnSettingsPanel';
 import HorizontalTableScrollbar from './HorizontalTableScrollbar';
@@ -129,6 +129,7 @@ export default function UploadedDocumentsView({
   const [previewDocument, setPreviewDocument] = useState<DbDocument | null>(null);
   const [assigningOrganization, setAssigningOrganization] = useState(false);
   const [organizationSearch, setOrganizationSearch] = useState('');
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const [issueMode, setIssueMode] = useState(false);
   const [issueComment, setIssueComment] = useState('');
   const [notice, setNotice] = useState('');
@@ -138,6 +139,7 @@ export default function UploadedDocumentsView({
   const { startResize } = useColumnResize(columns, setColumns);
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+  const listScrollPositionRef = useRef(0);
 
   const loadData = async () => {
     setLoading(true);
@@ -281,18 +283,37 @@ export default function UploadedDocumentsView({
     return !query || `${organization.name} ${organization.company_code || ''}`.toLowerCase().includes(query);
   });
 
-  const assignOrganization = async (organization: Company) => {
+  const returnToUploadedDocuments = () => {
+    setAssigningOrganization(false);
+    setSelectedDocument(null);
+    setOrganizationSearch('');
+    setSelectedOrganizationId('');
+    window.requestAnimationFrame(() => window.scrollTo({ top: listScrollPositionRef.current }));
+  };
+
+  const openOrganizationAssignment = (document: DbDocument) => {
+    listScrollPositionRef.current = window.scrollY;
+    setSelectedDocument(document);
+    setOrganizationSearch('');
+    setSelectedOrganizationId('');
+    setAssigningOrganization(true);
+    setIssueMode(false);
+    setNotice('');
+    window.scrollTo({ top: 0 });
+  };
+
+  const assignOrganization = async () => {
     if (!selectedDocument) return;
+    const organization = organizations.find((item) => item.id === selectedOrganizationId);
+    if (!organization) return;
     await supabase.from('documents').upsert(
       { ...selectedDocument, company_id: organization.id },
       { onConflict: 'id' },
     );
     const updated = { ...selectedDocument, company_id: organization.id };
     setDocuments((current) => current.map((document) => document.id === updated.id ? updated : document));
-    setSelectedDocument(updated);
-    setAssigningOrganization(false);
-    setOrganizationSearch('');
     setNotice(`Assigned to ${organization.name}.`);
+    returnToUploadedDocuments();
   };
 
   const reportIssue = async () => {
@@ -320,6 +341,7 @@ export default function UploadedDocumentsView({
     setSelectedDocument(null);
     setAssigningOrganization(false);
     setOrganizationSearch('');
+    setSelectedOrganizationId('');
     setIssueMode(false);
     setIssueComment('');
   };
@@ -411,6 +433,91 @@ export default function UploadedDocumentsView({
         (document.file_case && candidate.file_case === document.file_case)
       ))
     : undefined;
+
+  if (assigningOrganization && selectedDocument) {
+    const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
+    return (
+      <div className="relative flex min-h-full min-w-0 flex-col gap-8 bg-white px-4 py-14 sm:px-8 lg:px-[72px]">
+        <PageHeader
+          title="Assign organization"
+          leading={<HeaderBackButton onClick={returnToUploadedDocuments} label="Back to uploaded documents" />}
+          actions={(
+            <>
+              <PageActionButton onClick={returnToUploadedDocuments}>Cancel</PageActionButton>
+              <button
+                type="button"
+                disabled={!selectedOrganization}
+                onClick={() => void assignOrganization()}
+                className="flex h-8 items-center justify-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#006D91] disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]"
+              >
+                Assign organization
+              </button>
+            </>
+          )}
+        />
+        <SystemBreadcrumb items={["Uploaded documents", "Assign organization"]} />
+
+        <div className="mx-auto flex w-full max-w-[980px] flex-col gap-6">
+          <section className="rounded-2xl border border-[#D3E1EC] bg-white px-6 py-6 sm:px-8">
+            <h2 className="font-montserrat text-[20px] font-semibold leading-7 text-[#10233A]">Document information</h2>
+            <dl className="mt-6 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
+              {[
+                ['Document', selectedDocument.file_case || selectedDocument.number || selectedDocument.id],
+                ['Source', sourceValue(selectedDocument)],
+                ['Uploaded', displayUploadedDate(selectedDocument)],
+                ['Status', uploadedStatus(selectedDocument)],
+              ].map(([label, value]) => (
+                <div key={label} className="min-w-0">
+                  <dt className="font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3]">{label}</dt>
+                  <dd className="mt-1 truncate font-montserrat text-[14px] font-normal leading-5 text-[#10233A]" title={value}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="rounded-2xl border border-[#D3E1EC] bg-white px-6 py-6 sm:px-8">
+            <h2 className="font-montserrat text-[20px] font-semibold leading-7 text-[#10233A]">Organization</h2>
+            <p className="mt-1 font-montserrat text-[12px] font-normal leading-[18px] text-[#7288A3]">Search by organization name or company code, then select one organization.</p>
+            <label className="relative mt-5 block max-w-[520px]">
+              <span className="sr-only">Search organizations</span>
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7288A3]" />
+              <input
+                autoFocus
+                value={organizationSearch}
+                onChange={(event) => setOrganizationSearch(event.target.value)}
+                placeholder="Search name or company code"
+                className="h-10 w-full rounded-lg border border-[#D3E1EC] bg-white pl-10 pr-3 font-montserrat text-[13px] font-normal text-[#10233A] outline-none transition-colors placeholder:text-[#A1B6C6] focus:border-[#007EA7]"
+              />
+            </label>
+            <div className="mt-4 max-h-[340px] overflow-y-auto rounded-xl border border-[#E5EDF9] p-1.5">
+              {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
+                const selected = selectedOrganizationId === organization.id;
+                return (
+                  <button
+                    key={organization.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setSelectedOrganizationId(organization.id)}
+                    className={`flex min-h-[52px] w-full items-center justify-between gap-4 rounded-lg px-4 py-2 text-left transition-colors ${selected ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-montserrat text-[13px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
+                      <span className="mt-0.5 block truncate font-montserrat text-[11px] font-normal leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
+                    </span>
+                    <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>
+                      {selected ? <Check size={12} strokeWidth={3} className="text-white" /> : null}
+                    </span>
+                  </button>
+                );
+              }) : (
+                <div className="flex min-h-24 items-center justify-center px-4 text-center font-montserrat text-[12px] font-normal text-[#7288A3]">No organizations found.</div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -709,8 +816,7 @@ export default function UploadedDocumentsView({
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        setSelectedDocument(document);
-                        setAssigningOrganization(true);
+                        openOrganizationAssignment(document);
                       }}
                       className="font-montserrat text-[11px] font-semibold text-[#007EA7]"
                     >
@@ -891,23 +997,6 @@ export default function UploadedDocumentsView({
                 ))}
               </dl>
 
-              {assigningOrganization && (
-                <section className="mt-6 rounded-xl border border-[#D3E1EC] p-4">
-                  <label className="relative block">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-                    <input value={organizationSearch} onChange={(event) => setOrganizationSearch(event.target.value)} placeholder="Search name or company code" className="h-9 w-full rounded-lg border border-[#D3E1EC] pl-9 pr-3 font-montserrat text-[12px] outline-none focus:border-[#007EA7]" />
-                  </label>
-                  <div className="mt-3 max-h-56 overflow-y-auto">
-                    {assignmentOptions.map((organization) => (
-                      <button key={organization.id} type="button" onClick={() => void assignOrganization(organization)} className="flex w-full flex-col rounded-lg px-3 py-2 text-left hover:bg-[#EEF7FA]">
-                        <span className="font-montserrat text-[12px] font-semibold text-[#10233A]">{organization.name}</span>
-                        <span className="font-montserrat text-[11px] text-[#7288A3]">{organization.company_code || 'No company code'}</span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-
               {issueMode && (
                 <section className="mt-6 rounded-xl border border-[#D3E1EC] p-4">
                   <label className="font-montserrat text-[12px] font-semibold text-[#10233A]">
@@ -927,7 +1016,7 @@ export default function UploadedDocumentsView({
                 <button type="button" onClick={() => void onOpenDocument(selectedDocument)} className="h-[42px] w-full rounded-lg bg-[#007EA7] font-montserrat text-[14px] font-semibold text-white">Open in organization</button>
               )}
               {!selectedDocument.company_id && (
-                <button type="button" onClick={() => setAssigningOrganization(true)} className="h-[42px] w-full rounded-lg border-2 border-[#D3E1EC] bg-white font-montserrat text-[14px] font-semibold text-[#007EA7]">Assign organization</button>
+                <button type="button" onClick={() => openOrganizationAssignment(selectedDocument)} className="h-[42px] w-full rounded-lg border-2 border-[#D3E1EC] bg-white font-montserrat text-[14px] font-semibold text-[#007EA7]">Assign organization</button>
               )}
               <button type="button" onClick={() => setIssueMode(true)} className="flex h-[42px] w-full items-center justify-center gap-2 rounded-lg border-2 border-[#D3E1EC] bg-white font-montserrat text-[14px] font-semibold text-[#7288A3]"><AlertCircle size={16} />Report OCR issue</button>
             </footer>
