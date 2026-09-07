@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Search, Upload, X } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Upload, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { PageHeader } from './PageHeader';
 import { HeaderBackButton, SystemBreadcrumb } from './SystemNavigation';
@@ -8,6 +8,7 @@ import type { ColConfig } from './ColumnSettingsPanel';
 import HorizontalTableScrollbar from './HorizontalTableScrollbar';
 import OcrSearchField from './OcrSearchField';
 import TablePagination from './TablePagination';
+import SearchableSelect from './SearchableSelect';
 import { ResizeHandle, useColumnResize } from './useColumnResize';
 import { supabase, type Company, type DbDocument } from '../lib/supabase';
 import { getSearchSuggestions, matchesTextSearch } from '../utils/textSearch';
@@ -140,9 +141,7 @@ export default function UploadedDocumentsView({
   const [selectedDocument, setSelectedDocument] = useState<DbDocument | null>(null);
   const [previewDocument, setPreviewDocument] = useState<DbDocument | null>(null);
   const [assigningOrganization, setAssigningOrganization] = useState(false);
-  const [organizationSearch, setOrganizationSearch] = useState('');
   const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
-  const [showOrganizationOptions, setShowOrganizationOptions] = useState(false);
   const [assignmentLineMode, setAssignmentLineMode] = useState<'summary' | 'quantity'>('summary');
   const [issueMode, setIssueMode] = useState(false);
   const [issueComment, setIssueComment] = useState('');
@@ -292,26 +291,19 @@ export default function UploadedDocumentsView({
         .map((value) => ({ label: value, value })),
     ],
   };
-  const assignmentOptions = organizations.filter((organization) => {
-    const query = organizationSearch.trim().toLowerCase();
-    return !query || `${organization.name} ${organization.company_code || ''}`.toLowerCase().includes(query);
-  });
+
 
   const returnToUploadedDocuments = () => {
     setAssigningOrganization(false);
     setSelectedDocument(null);
-    setOrganizationSearch('');
     setSelectedOrganizationId('');
-    setShowOrganizationOptions(false);
     window.requestAnimationFrame(() => window.scrollTo({ top: listScrollPositionRef.current }));
   };
 
   const openOrganizationAssignment = (document: DbDocument) => {
     listScrollPositionRef.current = window.scrollY;
     setSelectedDocument(document);
-    setOrganizationSearch('');
     setSelectedOrganizationId('');
-    setShowOrganizationOptions(false);
     setAssignmentLineMode(document.summary_line_items?.length ? 'summary' : 'quantity');
     setAssigningOrganization(true);
     setIssueMode(false);
@@ -357,9 +349,7 @@ export default function UploadedDocumentsView({
   const closeSidePanel = () => {
     setSelectedDocument(null);
     setAssigningOrganization(false);
-    setOrganizationSearch('');
     setSelectedOrganizationId('');
-    setShowOrganizationOptions(false);
     setIssueMode(false);
     setIssueComment('');
   };
@@ -545,32 +535,6 @@ export default function UploadedDocumentsView({
                   <h1 className="truncate font-montserrat text-[18px] font-semibold leading-[26px] text-[#10233A]">Assign organization · {selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</h1>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-2">
-                <div className="relative flex w-[216px] flex-shrink-0 flex-col" onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) setShowOrganizationOptions(false);
-                }}>
-                  <label className="flex min-w-0 flex-col gap-2">
-                    <span className="relative">
-                      <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-                      <input value={organizationSearch} onFocus={() => setShowOrganizationOptions(true)} onChange={(event) => { setOrganizationSearch(event.target.value); setSelectedOrganizationId(''); setShowOrganizationOptions(true); }} aria-label="Search organization" placeholder="Search organization" className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-2 font-montserrat text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]" />
-                    </span>
-                  </label>
-                  {showOrganizationOptions && <div className="absolute left-0 top-[38px] z-20 max-h-[250px] w-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
-                  {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
-                    const selected = selectedOrganizationId === organization.id;
-                    return (
-                      <button key={organization.id} type="button" aria-pressed={selected} onClick={() => { setSelectedOrganizationId(organization.id); setOrganizationSearch(organization.name); setShowOrganizationOptions(false); }} className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left transition-colors ${selected ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}>
-                        <span className="min-w-0">
-                          <span className="block truncate font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
-                          <span className="block truncate font-montserrat text-[11px] leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
-                        </span>
-                        {selected ? <Check size={15} className="flex-shrink-0 text-[#007EA7]" /> : null}
-                      </button>
-                    );
-                  }) : (
-                    <div className="flex min-h-20 items-center justify-center px-3 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>
-                  )}
-                  </div>}
-                </div>
                   <button type="button" onClick={returnToUploadedDocuments} className="flex h-8 items-center rounded-md border-2 border-[#D3E1EC] bg-white px-3 font-montserrat text-[14px] font-semibold text-[#7288A3]">Cancel</button>
                   <button type="button" disabled={!selectedOrganization} onClick={() => void assignOrganization()} className="flex h-8 items-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]">Assign organization</button>
                 </div>
@@ -580,6 +544,22 @@ export default function UploadedDocumentsView({
             <div className="flex min-h-full w-[1984px] flex-col gap-8 px-6 pb-6">
               <div className="flex w-[1936px] flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
                 <div className="flex w-[216px] flex-shrink-0 flex-col gap-4">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Organization</span>
+                    <SearchableSelect
+                      ariaLabel="Organization"
+                      value={selectedOrganizationId}
+                      onChange={setSelectedOrganizationId}
+                      placeholder="Select organization"
+                      options={organizations.map((organization) => ({
+                        value: organization.id,
+                        label: [organization.name, organization.company_code].filter(Boolean).join(' · '),
+                      }))}
+                      className="h-8 rounded-md border border-[#D3E1EC] bg-white px-2 pr-8 font-montserrat text-[14px] font-medium leading-5 text-[#10233A]"
+                      menuClassName="min-w-[300px]"
+                      emptyMessage="No organizations found."
+                    />
+                  </div>
                   <AssignmentField label="Seller (LT)" value={isPurchase ? counterpartyName : organizationName} grey={!isPurchase} />
                   <AssignmentField label="Buyer (LT)" value={isPurchase ? organizationName : counterpartyName} grey={isPurchase} />
                   <AssignmentField label="Counterparty code" value={counterpartyCode} grey />
