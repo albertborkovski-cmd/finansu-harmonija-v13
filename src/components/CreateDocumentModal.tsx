@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, type ReactNode } from 'react';
 import { ArrowLeft, X, ChevronDown, ChevronUp, Upload, Paperclip, Check, Plus, Loader2, Trash2 } from 'lucide-react';
 import { supabase, type Company } from '../lib/supabase';
 import {
@@ -40,6 +40,9 @@ interface Props {
     onPreview: () => void;
     onStartChat: () => void;
   };
+  embedded?: boolean;
+  viewTitle?: string;
+  headerActions?: ReactNode;
 }
 
 type PartyDetails = {
@@ -619,7 +622,7 @@ function PartyEditor({
   );
 }
 
-export default function CreateDocumentModal({ companyId, companyName = '', sectionName = 'Documents', generalLedgerName, onOpenGeneralLedger, onClose, onCreated, initialData, presetDocumentType = '', initialFinancialLines, initialLineItems, initialSummaryLineItems, initialFinancialLineMode, initialImageUrl, viewOnly = false, viewActions }: Props) {
+export default function CreateDocumentModal({ companyId, companyName = '', sectionName = 'Documents', generalLedgerName, onOpenGeneralLedger, onClose, onCreated, initialData, presetDocumentType = '', initialFinancialLines, initialLineItems, initialSummaryLineItems, initialFinancialLineMode, initialImageUrl, viewOnly = false, viewActions, embedded = false, viewTitle, headerActions }: Props) {
   const [form, setForm] = useState<FormData>({
     ...EMPTY,
     ...(presetDocumentType ? { documentType: presetDocumentType } : {}),
@@ -1179,7 +1182,7 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
   };
 
   return (
-    <div className={`absolute inset-0 z-50 flex min-h-0 flex-col bg-white ${plainDocumentView ? 'document-view-plain' : ''}`}>
+    <div className={`${embedded ? 'relative h-full w-full' : 'absolute inset-0 z-50'} flex min-h-0 flex-col bg-white ${plainDocumentView ? 'document-view-plain' : ''}`}>
       <div
         ref={pageScrollRef}
         className="scrollbar-hide min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-white"
@@ -1192,16 +1195,17 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
                 <ArrowLeft size={28} strokeWidth={1.7} />
               </button>
               <h2 className="truncate font-montserrat text-[36px] font-semibold leading-[44px] text-[#10233A]">
-                {viewOnly
+                {viewTitle || (viewOnly
                   ? viewLabel
                   : isAccountingNote
                   ? 'Create accounting note'
                   : isDuplicate
                     ? 'Duplicate document'
-                    : 'Create document manually'}
+                    : 'Create document manually')}
               </h2>
             </div>
             <div className="flex h-10 flex-shrink-0 items-center gap-2">
+              {headerActions}
               {viewOnly && viewActions && <>
                 <PageActionButton onClick={viewActions.onSend}>Send to</PageActionButton>
                 <PageActionButton onClick={viewActions.onPreview}>Preview invoice</PageActionButton>
@@ -1216,7 +1220,7 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
             </div>
           </div>
           <div className="mx-auto mt-3 w-full min-w-0 max-w-[1440px] truncate pl-[60px] font-montserrat text-[13px] font-medium text-[#7288A3]">
-            Companies&nbsp;&nbsp;/&nbsp;&nbsp;{companyName || 'Company'}&nbsp;&nbsp;/&nbsp;&nbsp;{sectionName}&nbsp;&nbsp;/&nbsp;&nbsp;{viewOnly ? viewLabel : isAccountingNote ? 'Create accounting note' : isDuplicate ? 'Duplicate document' : 'Create document manually'}
+            {embedded ? 'Uploaded documents' : <>Companies&nbsp;&nbsp;/&nbsp;&nbsp;{companyName || 'Company'}&nbsp;&nbsp;/&nbsp;&nbsp;{sectionName}</>}&nbsp;&nbsp;/&nbsp;&nbsp;{viewTitle || (viewOnly ? viewLabel : isAccountingNote ? 'Create accounting note' : isDuplicate ? 'Duplicate document' : 'Create document manually')}
           </div>
         </div>
 

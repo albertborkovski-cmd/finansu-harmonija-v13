@@ -9,6 +9,7 @@ import HorizontalTableScrollbar from './HorizontalTableScrollbar';
 import OcrSearchField from './OcrSearchField';
 import TablePagination from './TablePagination';
 import { ResizeHandle, useColumnResize } from './useColumnResize';
+import CreateDocumentModal from './CreateDocumentModal';
 import { supabase, type Company, type DbDocument } from '../lib/supabase';
 import { getSearchSuggestions, matchesTextSearch } from '../utils/textSearch';
 import {
@@ -473,6 +474,149 @@ export default function UploadedDocumentsView({
         (document.file_case && candidate.file_case === document.file_case)
       ))
     : undefined;
+
+  if (assigningOrganization && selectedDocument) {
+    const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
+    const normalizeLines = (lines: NonNullable<DbDocument['line_items'] | DbDocument['summary_line_items']>) => lines.map((line) => ({
+      ...line,
+      systemId: line.systemId || line.id,
+      description: 'description' in line ? line.description || '' : '',
+    }));
+    const normalizedLineItems = normalizeLines(selectedDocument.line_items ?? []);
+    const normalizedSummaryLineItems = normalizeLines(selectedDocument.summary_line_items ?? []);
+    const initialLines = normalizedLineItems.length ? normalizedLineItems : normalizedSummaryLineItems;
+    const initialFinancialLines = initialLines.map((line, index) => ({
+      id: line.id || String(index + 1),
+      name: line.product || '',
+      description: line.description || '',
+      productGroup: line.productGroup || '',
+      quantity: line.qty || '1',
+      price: line.price || line.subtotal || '',
+      vatRate: line.vatPct || selectedDocument.vat_percent || '0',
+    }));
+    const organizationAction = (
+      <div className="relative flex items-center gap-2" onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setShowOrganizationOptions(false);
+      }}>
+        <div className="relative w-[260px]">
+          <Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 z-10 -translate-y-1/2 text-[#7288A3]" />
+          <input
+            value={organizationSearch}
+            onFocus={() => setShowOrganizationOptions(true)}
+            onChange={(event) => {
+              setOrganizationSearch(event.target.value);
+              setSelectedOrganizationId('');
+              setShowOrganizationOptions(true);
+            }}
+            placeholder="Search organization"
+            aria-label="Search organization"
+            className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-8 font-montserrat text-[13px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]"
+          />
+          <ChevronDown size={15} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#7288A3]" />
+          {showOrganizationOptions && (
+            <div className="absolute right-0 top-9 z-[90] max-h-[260px] w-[300px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
+              {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => (
+                <button
+                  key={organization.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedOrganizationId(organization.id);
+                    setOrganizationSearch(organization.name);
+                    setShowOrganizationOptions(false);
+                  }}
+                  className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left transition-colors ${selectedOrganizationId === organization.id ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
+                    <span className="block truncate font-montserrat text-[11px] leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
+                  </span>
+                  {selectedOrganizationId === organization.id ? <Check size={15} className="flex-shrink-0 text-[#007EA7]" /> : null}
+                </button>
+              )) : <div className="px-3 py-6 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          disabled={!selectedOrganization}
+          onClick={() => void assignOrganization()}
+          className="flex h-8 items-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[13px] font-semibold text-white transition-colors hover:bg-[#006A8E] disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]"
+        >
+          Assign organization
+        </button>
+      </div>
+    );
+
+    return (
+      <div className="fixed inset-0 z-50 flex min-h-0 bg-white">
+        <aside className="sticky left-0 top-0 flex h-screen w-[38%] min-w-[360px] max-w-[620px] flex-shrink-0 items-center justify-center border-r border-[#D3E1EC] bg-[#F8FDFF]">
+          {selectedDocument.image_url ? (
+            <object data={selectedDocument.image_url} type="application/pdf" aria-label="Uploaded document" className="h-full w-full bg-white">
+              <div className="flex h-full items-center justify-center px-8 text-center font-montserrat text-[13px] text-[#7288A3]">Document preview is not available in this browser.</div>
+            </object>
+          ) : (
+            <div className="flex w-[304px] flex-col items-center gap-3 rounded-xl border-2 border-dashed border-[#D3E1EC] bg-white px-8 py-14">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F7FA]"><FileText size={28} className="text-[#007EA7]" /></div>
+              <span className="font-montserrat text-[16px] font-semibold text-[#10233A]">Uploaded document</span>
+              <span className="max-w-full truncate font-montserrat text-[12px] font-medium text-[#7288A3]">{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
+            </div>
+          )}
+        </aside>
+        <main className="relative min-w-0 flex-1">
+          <CreateDocumentModal
+            embedded
+            viewOnly
+            viewTitle={`Assign organization · ${selectedDocument.file_case || selectedDocument.number || selectedDocument.id}`}
+            headerActions={organizationAction}
+            companyId={selectedOrganizationId || selectedDocument.company_id || ''}
+            companyName={selectedOrganization?.name || 'Organization not identified'}
+            sectionName="Uploaded documents"
+            initialData={{
+              status: selectedDocument.status || 'Processing',
+              receiveDate: selectedDocument.receive_date || '',
+              clientCounterparty: selectedDocument.client_counterparty === 'Organization pending identification'
+                ? 'testas'
+                : selectedDocument.client_counterparty || '',
+              documentType: selectedDocument.document_type || selectedDocument.type || 'Invoices',
+              documentSubtype: selectedDocument.document_subtype || '',
+              source: selectedDocument.source || '',
+              totalAmount: selectedDocument.total_amount || '',
+              dueEndDate: selectedDocument.due_end_date || '',
+              fileCase: selectedDocument.file_case || '',
+              orderNo: selectedDocument.order_no || '',
+              number: selectedDocument.number || '',
+              type: selectedDocument.type || '',
+              documentDate: selectedDocument.document_date || '',
+              documentPurpose: selectedDocument.document_purpose === 'Purchase' || selectedDocument.document_purpose === 'Sale'
+                ? selectedDocument.document_purpose
+                : 'Sale',
+              invoiceContractDate: selectedDocument.invoice_contract_date || '',
+              operationDate: selectedDocument.operation_date || '',
+              expenseAccount: selectedDocument.expense_account || '',
+              vatClassifier: selectedDocument.vat_classifier || '',
+              currency: selectedDocument.currency || 'EUR',
+              amountWithoutVat: selectedDocument.amount_without_vat || '',
+              vat: selectedDocument.vat || '',
+              vatPercent: selectedDocument.vat_percent || '',
+              departmentCode: selectedDocument.department_code || '',
+              objectProject: selectedDocument.object_project || '',
+              accountableResponsible: selectedDocument.accountable_responsible || '',
+              costCenter: selectedDocument.cost_center || '',
+              series: selectedDocument.series || '',
+              note: selectedDocument.valid_form || '',
+            }}
+            initialFinancialLines={initialFinancialLines}
+            initialLineItems={normalizedLineItems}
+            initialSummaryLineItems={normalizedSummaryLineItems}
+            initialFinancialLineMode={selectedDocument.line_items?.length ? 'quantity' : 'summary'}
+            initialImageUrl={selectedDocument.image_url}
+            onClose={returnToUploadedDocuments}
+            onCreated={returnToUploadedDocuments}
+          />
+        </main>
+      </div>
+    );
+  }
 
   if (assigningOrganization && selectedDocument) {
     const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
