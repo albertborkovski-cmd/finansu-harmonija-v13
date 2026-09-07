@@ -1280,10 +1280,10 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
               Verification methods
             </h2>
 
-            {/* Authorization notifications */}
+            {/* Authorization methods */}
             <div className="flex flex-col gap-4">
               <h3 className="text-sm font-semibold text-[#10233A]">
-                Authorization notifications
+                Authorization methods
               </h3>
 
               <div className="flex flex-col gap-2">
