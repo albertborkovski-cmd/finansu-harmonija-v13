@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import ColumnSettingsPanel, { type ColConfig } from "./ColumnSettingsPanel";
 import { useColumnResize, ResizeHandle } from "./useColumnResize";
+import DocumentDetailPanel from "./DocumentDetailPanel";
 import CreateDocumentModal from "./CreateDocumentModal";
 import { PageActionButton, PageHeader } from "./PageHeader";
 import HorizontalTableScrollbar from "./HorizontalTableScrollbar";
@@ -3127,23 +3128,27 @@ export default function Documents({
         </>
       )}
       {openDoc && (
-        <CreateDocumentModal
-          companyId={companyId}
+        <DocumentDetailPanel
+          doc={openDoc}
           companyName={companyName}
-          sectionName={title}
           generalLedgerName={generalLedgerName}
           onOpenGeneralLedger={onOpenGeneralLedger}
-          editDocumentId={openDoc.id}
-          initialData={documentFormData(openDoc, true)}
-          initialFinancialLines={documentFinancialLines(openDoc)}
-          initialLineItems={openDoc.lineItems}
-          initialSummaryLineItems={openDoc.summaryLineItems}
-          initialFinancialLineMode={openDoc.lineItems.length > 0 ? "quantity" : "summary"}
-          initialImageUrl={openDoc.imageUrl}
           onClose={() => setOpenDoc(null)}
-          onCreated={() => {
-            setOpenDoc(null);
-            fetchDocs();
+          onImageUpload={(docId, imageUrl) => {
+            setDocs((prev) =>
+              prev.map((d) => (d.id === docId ? { ...d, imageUrl } : d)),
+            );
+            setOpenDoc((prev) =>
+              prev && prev.id === docId ? { ...prev, imageUrl } : prev,
+            );
+          }}
+          onSaved={(docId, values) => {
+            setDocs((prev) =>
+              prev.map((d) => (d.id === docId ? { ...d, ...values } : d)),
+            );
+            setOpenDoc((prev) =>
+              prev && prev.id === docId ? { ...prev, ...values } : prev,
+            );
           }}
         />
       )}

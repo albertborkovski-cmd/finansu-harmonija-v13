@@ -27,7 +27,6 @@ interface Props {
   onOpenGeneralLedger?: () => void;
   onClose: () => void;
   onCreated: () => void;
-  editDocumentId?: string;
   initialData?: Partial<FormData>;
   presetDocumentType?: string;
   initialFinancialLines?: FinancialLine[];
@@ -620,14 +619,13 @@ function PartyEditor({
   );
 }
 
-export default function CreateDocumentModal({ companyId, companyName = '', sectionName = 'Documents', generalLedgerName, onOpenGeneralLedger, onClose, onCreated, editDocumentId, initialData, presetDocumentType = '', initialFinancialLines, initialLineItems, initialSummaryLineItems, initialFinancialLineMode, initialImageUrl, viewOnly = false, viewActions }: Props) {
+export default function CreateDocumentModal({ companyId, companyName = '', sectionName = 'Documents', generalLedgerName, onOpenGeneralLedger, onClose, onCreated, initialData, presetDocumentType = '', initialFinancialLines, initialLineItems, initialSummaryLineItems, initialFinancialLineMode, initialImageUrl, viewOnly = false, viewActions }: Props) {
   const [form, setForm] = useState<FormData>({
     ...EMPTY,
     ...(presetDocumentType ? { documentType: presetDocumentType } : {}),
     ...initialData,
   });
-  const isEdit = Boolean(editDocumentId);
-  const isDuplicate = !!initialData && !viewOnly && !isEdit;
+  const isDuplicate = !!initialData && !viewOnly;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [statusOpen, setStatusOpen] = useState(false);
@@ -1072,7 +1070,7 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
       vatClass: '',
     };
 
-    const documentValues = {
+    const { data: insertedDocuments, error: dbErr } = await supabase.from('documents').insert({
       company_id: companyId,
       status: isAccountingNote ? form.accountingNoteStatus : form.status,
       receive_date: form.receiveDate || null,
@@ -1111,19 +1109,14 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
       image_url: imageUrl,
       line_items: isAccountingNote
         ? [accountingLine]
-        : isDuplicate || isEdit
+        : isDuplicate
         ? copyLines(initialLineItems, initialFinancialLineMode === 'quantity')
         : financialLines.map(newLineFromFinancial),
-      summary_line_items: isDuplicate || isEdit
+      summary_line_items: isDuplicate
         ? copyLines(initialSummaryLineItems, initialFinancialLineMode === 'summary')
         : [],
       created_by: getCurrentUserName(),
-    };
-    const saveResult = isEdit
-      ? await supabase.from('documents').update(documentValues).eq('id', editDocumentId!)
-      : await supabase.from('documents').insert(documentValues).select('id');
-    const insertedDocuments = isEdit ? null : saveResult.data;
-    const dbErr = saveResult.error;
+    });
     setSaving(false);
     if (dbErr) { setError(dbErr.message); return; }
     const normalizedExternalTitle = externalParty.title.trim().toLocaleLowerCase();
@@ -1158,7 +1151,7 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
       const nextCounterparties = [...counterparties, newCounterparty];
       window.localStorage.setItem(COUNTERPARTIES_STORAGE_KEY, JSON.stringify(nextCounterparties));
       window.dispatchEvent(new CustomEvent('counterparties-updated'));
-      const insertedDocumentId = editDocumentId ?? insertedDocuments?.[0]?.id;
+      const insertedDocumentId = insertedDocuments?.[0]?.id;
       if (insertedDocumentId) {
         await supabase
           .from('documents')
@@ -1205,9 +1198,7 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
                   ? 'Create accounting note'
                   : isDuplicate
                     ? 'Duplicate document'
-                    : isEdit
-                      ? 'Edit document'
-                      : 'Create document manually'}
+                    : 'Create document manually'}
               </h2>
             </div>
             <div className="flex h-10 flex-shrink-0 items-center gap-2">
@@ -1220,12 +1211,12 @@ export default function CreateDocumentModal({ companyId, companyName = '', secti
                 {viewOnly ? 'Close' : 'Cancel'}
               </button>
               {!viewOnly && <button data-system-action="true" form="create-doc-form" type="submit" disabled={saving} className="flex h-8 items-center justify-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[13px] font-semibold text-white transition-colors hover:bg-[#006A8E] disabled:cursor-not-allowed disabled:opacity-60">
-                {saving ? 'Saving…' : isEdit ? 'Save changes' : isDuplicate ? 'Save copy' : 'Save document'}
+                {saving ? 'Saving…' : isDuplicate ? 'Save copy' : 'Save document'}
               </button>}
             </div>
           </div>
           <div className="mx-auto mt-3 w-full min-w-0 max-w-[1440px] truncate pl-[60px] font-montserrat text-[13px] font-medium text-[#7288A3]">
-            Companies&nbsp;&nbsp;/&nbsp;&nbsp;{companyName || 'Company'}&nbsp;&nbsp;/&nbsp;&nbsp;{sectionName}&nbsp;&nbsp;/&nbsp;&nbsp;{viewOnly ? viewLabel : isEdit ? 'Edit document' : isAccountingNote ? 'Create accounting note' : isDuplicate ? 'Duplicate document' : 'Create document manually'}
+            Companies&nbsp;&nbsp;/&nbsp;&nbsp;{companyName || 'Company'}&nbsp;&nbsp;/&nbsp;&nbsp;{sectionName}&nbsp;&nbsp;/&nbsp;&nbsp;{viewOnly ? viewLabel : isAccountingNote ? 'Create accounting note' : isDuplicate ? 'Duplicate document' : 'Create document manually'}
           </div>
         </div>
 
