@@ -476,8 +476,9 @@ export default function UploadedDocumentsView({
             </div>
           </section>
 
-          <section className="min-w-0 flex-1 overflow-x-auto scrollbar-hide">
-            <div className="flex min-h-screen w-[1560px] flex-col gap-8 p-6">
+          <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <div ref={tableScrollRef} className="min-h-0 flex-1 overflow-x-auto overflow-y-visible scrollbar-hide">
+            <div className="flex min-h-screen w-[1984px] flex-col gap-8 p-6">
               <header className="flex min-h-8 items-center justify-between gap-6">
                 <div className="flex min-w-0 items-center gap-2">
                   <HeaderBackButton onClick={returnToUploadedDocuments} label="Back to uploaded documents" />
@@ -489,8 +490,8 @@ export default function UploadedDocumentsView({
                 </div>
               </header>
 
-              <div className="relative flex w-full flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
-                <div className="w-[250px] flex-shrink-0" onBlur={(event) => {
+              <div className="flex w-[1936px] flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
+                <div className="relative flex w-[216px] flex-shrink-0 flex-col gap-4" onBlur={(event) => {
                   if (!event.currentTarget.contains(event.relatedTarget)) setShowOrganizationOptions(false);
                 }}>
                   <label className="flex min-w-0 flex-col gap-2">
@@ -500,7 +501,7 @@ export default function UploadedDocumentsView({
                       <input value={organizationSearch} onFocus={() => setShowOrganizationOptions(true)} onChange={(event) => { setOrganizationSearch(event.target.value); setSelectedOrganizationId(''); setShowOrganizationOptions(true); }} placeholder="Search organization" className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-2 font-montserrat text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]" />
                     </span>
                   </label>
-                  {showOrganizationOptions && <div className="absolute left-4 top-[78px] z-20 max-h-[250px] w-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
+                  {showOrganizationOptions && <div className="absolute left-0 top-[62px] z-20 max-h-[250px] w-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
                   {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
                     const selected = selectedOrganizationId === organization.id;
                     return (
@@ -516,22 +517,31 @@ export default function UploadedDocumentsView({
                     <div className="flex min-h-20 items-center justify-center px-3 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>
                   )}
                   </div>}
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Counterparty code</span>
+                    <div className="flex h-8 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]">—</div>
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Accountable person</span>
+                    <div className="flex h-8 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]">{selectedDocument.accountable_responsible || '—'}</div>
+                  </div>
                 </div>
 
                 {[
-                  ['Client / Counterparty', selectedDocument.client_counterparty || '—'],
-                  ['Invoice date', selectedDocument.document_date || '—'],
-                  ['Due date', selectedDocument.due_end_date || '—'],
-                  ['Document Number', selectedDocument.number || '—'],
-                  ['Amount', selectedDocument.amount_without_vat || '—'],
-                  ['Operation date', selectedDocument.operation_date || '—'],
-                  ['Order number', selectedDocument.order_no || '—'],
-                  ['Total Amount', selectedDocument.total_amount || '—'],
-                  ['Currency', selectedDocument.currency || '—'],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex w-[180px] flex-shrink-0 flex-col gap-2">
-                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">{label}</span>
-                    <div className="flex h-8 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]">{value}</div>
+                  [['Client / Counterparty', selectedDocument.client_counterparty || '—']],
+                  [['Invoice date', selectedDocument.document_date || '—'], ['Operation date', selectedDocument.operation_date || '—']],
+                  [['Due date', selectedDocument.due_end_date || '—']],
+                  [['Document Number', selectedDocument.number || '—'], ['Order number', selectedDocument.order_no || '—']],
+                  [['Amount', selectedDocument.amount_without_vat || '—'], ['Total Amount', selectedDocument.total_amount || '—']],
+                  [['VAT', selectedDocument.vat || '—'], ['Currency', selectedDocument.currency || '—']],
+                ].map((fieldGroup, groupIndex) => (
+                  <div key={groupIndex} className="flex w-[216px] flex-shrink-0 flex-col gap-4">
+                    {fieldGroup.map(([label, value]) => (
+                      <div key={label} className="flex min-w-0 flex-col gap-2">
+                        <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">{label}</span>
+                        <div className="flex h-8 min-w-0 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]"><span className="truncate">{value}</span></div>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -548,7 +558,19 @@ export default function UploadedDocumentsView({
                   </div>
                 ))}
               </section>
+
+              <section className="mt-auto flex w-[1936px] flex-col gap-3 pb-2">
+                <h2 className="font-montserrat text-[12px] font-semibold text-[#10233A]">Activity history</h2>
+                <div className="grid grid-cols-[240px_240px_300px_1fr] border-b border-[#D3E1EC] pb-2 font-montserrat text-[12px] font-medium text-[#7288A3]">
+                  <span>Date</span><span>User</span><span>Action</span><span>Details</span>
+                </div>
+                <div className="grid h-10 grid-cols-[240px_240px_300px_1fr] items-center rounded-lg bg-[#F8FDFF] px-0 font-montserrat text-[12px] text-[#10233A]">
+                  <span>{displayUploadedDate(selectedDocument)}</span><span>{sourceValue(selectedDocument)}</span><span>Organization identification</span><span>Organization assignment is required.</span>
+                </div>
+              </section>
             </div>
+            </div>
+            <HorizontalTableScrollbar scrollRef={tableScrollRef} className="px-6 py-2" />
           </section>
         </div>
       </div>
