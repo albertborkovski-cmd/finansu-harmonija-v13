@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Search, X } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Search, Upload, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { PageHeader } from './PageHeader';
 import { HeaderBackButton, SystemBreadcrumb } from './SystemNavigation';
@@ -9,7 +9,6 @@ import HorizontalTableScrollbar from './HorizontalTableScrollbar';
 import OcrSearchField from './OcrSearchField';
 import TablePagination from './TablePagination';
 import { ResizeHandle, useColumnResize } from './useColumnResize';
-import CreateDocumentModal from './CreateDocumentModal';
 import { supabase, type Company, type DbDocument } from '../lib/supabase';
 import { getSearchSuggestions, matchesTextSearch } from '../utils/textSearch';
 import {
@@ -89,6 +88,17 @@ function statusReason(_document: DbDocument, status: UploadedStatus) {
 
 function sourceValue(document: DbDocument) {
   return document.created_by || document.source || 'Unknown source';
+}
+
+function AssignmentField({ label, value, grey = false }: { label: string; value?: string; grey?: boolean }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">{label}</span>
+      <div className={`flex h-8 min-w-0 items-center rounded-md border border-[#D3E1EC] px-2 py-[6px] font-montserrat text-[14px] font-medium leading-5 ${grey ? 'bg-[#F7F7F7] text-[#828588]' : 'bg-white text-[#10233A]'}`}>
+        <span className="truncate" title={value || undefined}>{value || '—'}</span>
+      </div>
+    </div>
+  );
 }
 
 function uploadedVisibleSearchCells(document: DbDocument, organizationName: string) {
@@ -477,149 +487,16 @@ export default function UploadedDocumentsView({
 
   if (assigningOrganization && selectedDocument) {
     const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
-    const normalizeLines = (lines: NonNullable<DbDocument['line_items'] | DbDocument['summary_line_items']>) => lines.map((line) => ({
-      ...line,
-      systemId: line.systemId || line.id,
-      description: 'description' in line ? line.description || '' : '',
-    }));
-    const normalizedLineItems = normalizeLines(selectedDocument.line_items ?? []);
-    const normalizedSummaryLineItems = normalizeLines(selectedDocument.summary_line_items ?? []);
-    const initialLines = normalizedLineItems.length ? normalizedLineItems : normalizedSummaryLineItems;
-    const initialFinancialLines = initialLines.map((line, index) => ({
-      id: line.id || String(index + 1),
-      name: line.product || '',
-      description: line.description || '',
-      productGroup: line.productGroup || '',
-      quantity: line.qty || '1',
-      price: line.price || line.subtotal || '',
-      vatRate: line.vatPct || selectedDocument.vat_percent || '0',
-    }));
-    const organizationAction = (
-      <div className="relative flex items-center gap-2" onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setShowOrganizationOptions(false);
-      }}>
-        <div className="relative w-[260px]">
-          <Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 z-10 -translate-y-1/2 text-[#7288A3]" />
-          <input
-            value={organizationSearch}
-            onFocus={() => setShowOrganizationOptions(true)}
-            onChange={(event) => {
-              setOrganizationSearch(event.target.value);
-              setSelectedOrganizationId('');
-              setShowOrganizationOptions(true);
-            }}
-            placeholder="Search organization"
-            aria-label="Search organization"
-            className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-8 font-montserrat text-[13px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]"
-          />
-          <ChevronDown size={15} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-          {showOrganizationOptions && (
-            <div className="absolute right-0 top-9 z-[90] max-h-[260px] w-[300px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
-              {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => (
-                <button
-                  key={organization.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedOrganizationId(organization.id);
-                    setOrganizationSearch(organization.name);
-                    setShowOrganizationOptions(false);
-                  }}
-                  className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left transition-colors ${selectedOrganizationId === organization.id ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
-                    <span className="block truncate font-montserrat text-[11px] leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
-                  </span>
-                  {selectedOrganizationId === organization.id ? <Check size={15} className="flex-shrink-0 text-[#007EA7]" /> : null}
-                </button>
-              )) : <div className="px-3 py-6 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>}
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          disabled={!selectedOrganization}
-          onClick={() => void assignOrganization()}
-          className="flex h-8 items-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[13px] font-semibold text-white transition-colors hover:bg-[#006A8E] disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]"
-        >
-          Assign organization
-        </button>
-      </div>
-    );
-
-    return (
-      <div className="fixed inset-0 z-50 flex min-h-0 bg-white">
-        <aside className="sticky left-0 top-0 flex h-screen w-[38%] min-w-[360px] max-w-[620px] flex-shrink-0 items-center justify-center border-r border-[#D3E1EC] bg-[#F8FDFF]">
-          {selectedDocument.image_url ? (
-            <object data={selectedDocument.image_url} type="application/pdf" aria-label="Uploaded document" className="h-full w-full bg-white">
-              <div className="flex h-full items-center justify-center px-8 text-center font-montserrat text-[13px] text-[#7288A3]">Document preview is not available in this browser.</div>
-            </object>
-          ) : (
-            <div className="flex w-[304px] flex-col items-center gap-3 rounded-xl border-2 border-dashed border-[#D3E1EC] bg-white px-8 py-14">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F7FA]"><FileText size={28} className="text-[#007EA7]" /></div>
-              <span className="font-montserrat text-[16px] font-semibold text-[#10233A]">Uploaded document</span>
-              <span className="max-w-full truncate font-montserrat text-[12px] font-medium text-[#7288A3]">{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
-            </div>
-          )}
-        </aside>
-        <main className="relative min-w-0 flex-1">
-          <CreateDocumentModal
-            embedded
-            viewOnly
-            viewTitle={`Assign organization · ${selectedDocument.file_case || selectedDocument.number || selectedDocument.id}`}
-            headerActions={organizationAction}
-            companyId={selectedOrganizationId || selectedDocument.company_id || ''}
-            companyName={selectedOrganization?.name || 'Organization not identified'}
-            sectionName="Uploaded documents"
-            initialData={{
-              status: selectedDocument.status || 'Processing',
-              receiveDate: selectedDocument.receive_date || '',
-              clientCounterparty: selectedDocument.client_counterparty === 'Organization pending identification'
-                ? 'testas'
-                : selectedDocument.client_counterparty || '',
-              documentType: selectedDocument.document_type || selectedDocument.type || 'Invoices',
-              documentSubtype: selectedDocument.document_subtype || '',
-              source: selectedDocument.source || '',
-              totalAmount: selectedDocument.total_amount || '',
-              dueEndDate: selectedDocument.due_end_date || '',
-              fileCase: selectedDocument.file_case || '',
-              orderNo: selectedDocument.order_no || '',
-              number: selectedDocument.number || '',
-              type: selectedDocument.type || '',
-              documentDate: selectedDocument.document_date || '',
-              documentPurpose: selectedDocument.document_purpose === 'Purchase' || selectedDocument.document_purpose === 'Sale'
-                ? selectedDocument.document_purpose
-                : 'Sale',
-              invoiceContractDate: selectedDocument.invoice_contract_date || '',
-              operationDate: selectedDocument.operation_date || '',
-              expenseAccount: selectedDocument.expense_account || '',
-              vatClassifier: selectedDocument.vat_classifier || '',
-              currency: selectedDocument.currency || 'EUR',
-              amountWithoutVat: selectedDocument.amount_without_vat || '',
-              vat: selectedDocument.vat || '',
-              vatPercent: selectedDocument.vat_percent || '',
-              departmentCode: selectedDocument.department_code || '',
-              objectProject: selectedDocument.object_project || '',
-              accountableResponsible: selectedDocument.accountable_responsible || '',
-              costCenter: selectedDocument.cost_center || '',
-              series: selectedDocument.series || '',
-              note: selectedDocument.valid_form || '',
-            }}
-            initialFinancialLines={initialFinancialLines}
-            initialLineItems={normalizedLineItems}
-            initialSummaryLineItems={normalizedSummaryLineItems}
-            initialFinancialLineMode={selectedDocument.line_items?.length ? 'quantity' : 'summary'}
-            initialImageUrl={selectedDocument.image_url}
-            onClose={returnToUploadedDocuments}
-            onCreated={returnToUploadedDocuments}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  if (assigningOrganization && selectedDocument) {
-    const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
+    const isPurchase = /purchase|expense|pirk/i.test(`${selectedDocument.type} ${selectedDocument.document_type}`);
+    const organizationName = selectedOrganization?.name || organizationNames.get(selectedDocument.company_id || '') || '—';
+    const counterpartyName = selectedDocument.client_counterparty === 'Organization pending identification'
+      ? '—'
+      : selectedDocument.client_counterparty || '—';
+    let counterpartyCode = '';
+    try {
+      const stored = JSON.parse(window.localStorage.getItem('finansu-harmonija:v7:settings:counterparties') || '[]') as Company[];
+      if (Array.isArray(stored)) counterpartyCode = stored.find((party) => party.id === selectedDocument.counterparty_id || party.name.trim().toLowerCase() === counterpartyName.trim().toLowerCase())?.company_code || '';
+    } catch { /* Missing optional directory data leaves the code empty. */ }
     const selectedAssignmentLines = assignmentLineMode === 'summary'
       ? selectedDocument.summary_line_items
       : selectedDocument.line_items;
@@ -651,8 +528,8 @@ export default function UploadedDocumentsView({
                 </object>
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <div className="flex w-[304px] flex-col items-center gap-3 rounded-lg border-2 border-dashed border-[#D3E1EC] bg-white px-8 py-14">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F7FA]"><FileText size={28} className="text-[#007EA7]" /></div>
+                  <div className="flex w-[216px] flex-col items-center gap-3 rounded-lg border-2 border-dashed border-[#D3E1EC] bg-white px-8 py-10">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F7FA]"><Upload size={28} className="text-[#007EA7]" /></div>
                     <span className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Uploaded document</span>
                     <span className="max-w-full truncate font-montserrat text-[13px] font-medium leading-5 text-[#7288A3]" title={selectedDocument.file_case || selectedDocument.number || selectedDocument.id}>{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
                   </div>
@@ -662,31 +539,22 @@ export default function UploadedDocumentsView({
           </section>
 
           <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <div ref={tableScrollRef} className="min-h-0 flex-1 overflow-x-auto overflow-y-visible scrollbar-hide">
-            <div className="flex min-h-screen w-[1984px] flex-col gap-8 p-6">
-              <header className="flex min-h-8 items-center justify-between gap-6">
+              <header className="flex min-h-[94px] flex-shrink-0 items-center justify-between gap-4 px-6 pb-[38px] pt-6">
                 <div className="flex min-w-0 items-center gap-2">
                   <HeaderBackButton onClick={returnToUploadedDocuments} label="Back to uploaded documents" />
                   <h1 className="truncate font-montserrat text-[18px] font-semibold leading-[26px] text-[#10233A]">Assign organization · {selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</h1>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-2">
-                  <button type="button" onClick={returnToUploadedDocuments} className="flex h-8 items-center rounded-md border-2 border-[#D3E1EC] bg-white px-3 font-montserrat text-[14px] font-semibold text-[#7288A3]">Cancel</button>
-                  <button type="button" disabled={!selectedOrganization} onClick={() => void assignOrganization()} className="flex h-8 items-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]">Assign organization</button>
-                </div>
-              </header>
-
-              <div className="flex w-[1936px] flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
-                <div className="relative flex w-[216px] flex-shrink-0 flex-col gap-4" onBlur={(event) => {
+                <div className="relative flex w-[216px] flex-shrink-0 flex-col" onBlur={(event) => {
                   if (!event.currentTarget.contains(event.relatedTarget)) setShowOrganizationOptions(false);
                 }}>
                   <label className="flex min-w-0 flex-col gap-2">
-                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Organization</span>
                     <span className="relative">
                       <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-                      <input value={organizationSearch} onFocus={() => setShowOrganizationOptions(true)} onChange={(event) => { setOrganizationSearch(event.target.value); setSelectedOrganizationId(''); setShowOrganizationOptions(true); }} placeholder="Search organization" className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-2 font-montserrat text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]" />
+                      <input value={organizationSearch} onFocus={() => setShowOrganizationOptions(true)} onChange={(event) => { setOrganizationSearch(event.target.value); setSelectedOrganizationId(''); setShowOrganizationOptions(true); }} aria-label="Search organization" placeholder="Search organization" className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-2 font-montserrat text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]" />
                     </span>
                   </label>
-                  {showOrganizationOptions && <div className="absolute left-0 top-[62px] z-20 max-h-[250px] w-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
+                  {showOrganizationOptions && <div className="absolute left-0 top-[38px] z-20 max-h-[250px] w-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
                   {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
                     const selected = selectedOrganizationId === organization.id;
                     return (
@@ -702,33 +570,35 @@ export default function UploadedDocumentsView({
                     <div className="flex min-h-20 items-center justify-center px-3 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>
                   )}
                   </div>}
-                  <div className="flex min-w-0 flex-col gap-2">
-                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Counterparty code</span>
-                    <div className="flex h-8 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]">—</div>
-                  </div>
-                  <div className="flex min-w-0 flex-col gap-2">
-                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Accountable person</span>
-                    <div className="flex h-8 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]">{selectedDocument.accountable_responsible || '—'}</div>
-                  </div>
+                </div>
+                  <button type="button" onClick={returnToUploadedDocuments} className="flex h-8 items-center rounded-md border-2 border-[#D3E1EC] bg-white px-3 font-montserrat text-[14px] font-semibold text-[#7288A3]">Cancel</button>
+                  <button type="button" disabled={!selectedOrganization} onClick={() => void assignOrganization()} className="flex h-8 items-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]">Assign organization</button>
+                </div>
+              </header>
+
+            <div ref={tableScrollRef} className="min-h-0 flex-1 overflow-x-auto overflow-y-auto scrollbar-hide">
+            <div className="flex min-h-full w-[1984px] flex-col gap-8 px-6 pb-6">
+              <div className="flex w-[1936px] flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
+                <div className="flex w-[216px] flex-shrink-0 flex-col gap-4">
+                  <AssignmentField label="Seller (LT)" value={isPurchase ? counterpartyName : organizationName} grey={!isPurchase} />
+                  <AssignmentField label="Buyer (LT)" value={isPurchase ? organizationName : counterpartyName} grey={isPurchase} />
+                  <AssignmentField label="Counterparty code" value={counterpartyCode} grey />
+                  <AssignmentField label="Accountable person" value={selectedDocument.accountable_responsible} />
                 </div>
 
                 {[
-                  [['Client / Counterparty', selectedDocument.client_counterparty || '—']],
-                  [['Invoice date', selectedDocument.document_date || '—'], ['Operation date', selectedDocument.operation_date || '—']],
+                  [['Invoice date', selectedDocument.invoice_contract_date || selectedDocument.document_date || '—'], ['Operation date', selectedDocument.operation_date || '—']],
                   [['Due date', selectedDocument.due_end_date || '—']],
                   [['Document Number', selectedDocument.number || '—'], ['Order number', selectedDocument.order_no || '—']],
                   [['Amount', selectedDocument.amount_without_vat || '—'], ['Total Amount', selectedDocument.total_amount || '—']],
                   [['VAT', selectedDocument.vat || '—'], ['Currency', selectedDocument.currency || '—']],
                 ].map((fieldGroup, groupIndex) => (
                   <div key={groupIndex} className="flex w-[216px] flex-shrink-0 flex-col gap-4">
-                    {fieldGroup.map(([label, value]) => (
-                      <div key={label} className="flex min-w-0 flex-col gap-2">
-                        <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">{label}</span>
-                        <div className="flex h-8 min-w-0 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]"><span className="truncate">{value}</span></div>
-                      </div>
-                    ))}
+                    {fieldGroup.map(([label, value]) => <AssignmentField key={label} label={label} value={value} grey={['Amount', 'Total Amount', 'VAT'].includes(label)} />)}
                   </div>
                 ))}
+
+
               </div>
 
               <section className="flex min-h-[250px] w-[1936px] flex-col gap-2 overflow-visible">
@@ -751,19 +621,18 @@ export default function UploadedDocumentsView({
                     <div key={line.id} className={`flex flex-row items-center gap-[2px] rounded-lg p-[5px] ${lineIndex % 2 === 0 ? 'bg-[#F8FDFF]' : 'bg-white'}`}>
                       <div className="flex w-[18px] flex-shrink-0 items-center justify-center font-montserrat text-[12px] font-medium text-[#A1B6C6]">{lineIndex + 1}</div>
                       <div className="w-6 flex-shrink-0" />
-                      {[[line.unit,110],[line.qty,80],[line.price,90],[line.subtotal,90],[line.vat,80],[line.vatPct,70],[line.total,110],[line.productGroup,130],[line.department,100],[line.object,90],[line.series,80],[line.center,90],[line.expense,110],[line.vatClass,110]].map(([value, width], index) => <div key={`${line.id}-${index}`} className="h-[26px] flex-shrink-0 truncate px-2 py-1 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]" style={{ width: Number(width) }}>{String(value || '—')}</div>)}
+                      {[[line.unit,110],[line.qty,80],[line.price,90],[line.subtotal,90],[line.vat,80],[line.vatPct,70],[line.total,110],[line.productGroup,130],[line.department,100],[line.object,90],[line.series,80],[line.center,90],[line.expense,110],[line.vatClass,110]].map(([value, width], index) => <div key={`${line.id}-${index}`} className={`flex h-[26px] flex-shrink-0 items-center rounded border border-[#D3E1EC] px-2 font-montserrat text-[12px] font-medium leading-[18px] ${index === 6 ? 'bg-[#F7F7F7] text-[#828588]' : 'bg-white text-[#10233A]'}`} style={{ width: Number(width) }}><span className="truncate" title={String(value || '')}>{String(value || '—')}</span></div>)}
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section className="mt-auto flex w-[1936px] flex-col gap-3 pb-2">
-                <h2 className="font-montserrat text-[12px] font-semibold text-[#10233A]">Activity history</h2>
-                <div className="grid grid-cols-[240px_240px_300px_1fr] border-b border-[#D3E1EC] pb-2 font-montserrat text-[12px] font-medium text-[#7288A3]">
-                  <span>Date</span><span>User</span><span>Action</span><span>Details</span>
+              <section aria-label="Activity history" className="flex w-[1936px] flex-col gap-4 pb-2">
+                <div className="flex items-center gap-3 pl-3 font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3]">
+                  <span className="w-[158px] text-[#10233A]">Date</span><span className="h-5 w-px bg-[#D3E1EC]" /><span className="w-[120px]">User</span><span className="h-5 w-px bg-[#D3E1EC]" /><span className="w-[136px]">Action</span><span className="h-5 w-px bg-[#D3E1EC]" /><span>Details</span>
                 </div>
-                <div className="grid h-10 grid-cols-[240px_240px_300px_1fr] items-center rounded-lg bg-[#F8FDFF] px-0 font-montserrat text-[12px] text-[#10233A]">
-                  <span>{displayUploadedDate(selectedDocument)}</span><span>{sourceValue(selectedDocument)}</span><span>Organization identification</span><span>Organization assignment is required.</span>
+                <div className="flex h-9 items-center rounded-lg bg-[#F8FDFF] font-montserrat text-[12px] font-normal leading-[18px] text-[#10233A]">
+                  <span className="w-[180px] flex-shrink-0 px-3">{displayUploadedDate(selectedDocument)}</span><div className="flex flex-1 items-center gap-6 px-3"><span className="w-[120px] truncate" title={sourceValue(selectedDocument)}>{sourceValue(selectedDocument)}</span><span className="w-[136px] truncate" title="Organization identification">Organization identification</span><span>Organization assignment is required.</span></div>
                 </div>
               </section>
             </div>
