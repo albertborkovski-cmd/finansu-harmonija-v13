@@ -971,7 +971,22 @@ export default function ProfileSettings({ user, onProfileSaved, onOpenCompanies 
 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-[#10233A]">Email</label>
-                <input type="email" value={email} readOnly className={readOnlyInputClass} />
+                <div className="group relative min-w-0">
+                  <input
+                    type="email"
+                    value={email}
+                    readOnly
+                    aria-describedby="profile-email-full-value"
+                    className={`${readOnlyInputClass} peer truncate`}
+                  />
+                  <span
+                    id="profile-email-full-value"
+                    role="tooltip"
+                    className="pointer-events-none invisible absolute left-0 top-full z-50 mt-2 max-w-[min(360px,calc(100vw-48px))] break-all rounded-lg border border-[#D3E1EC] bg-white px-3 py-2 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A] opacity-0 shadow-[0_8px_24px_rgba(16,35,58,0.14)] transition-opacity duration-75 group-hover:visible group-hover:opacity-100 peer-focus-visible:visible peer-focus-visible:opacity-100"
+                  >
+                    {email}
+                  </span>
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">
