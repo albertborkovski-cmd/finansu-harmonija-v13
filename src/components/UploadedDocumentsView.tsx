@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Check, ChevronDown, FileText, Plus, Search, X } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Search, X } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { HeaderBackButton, SystemBreadcrumb } from './SystemNavigation';
 import ColumnSortButton, { useMultiColumnSort } from './ColumnSortButton';
@@ -131,6 +131,7 @@ export default function UploadedDocumentsView({
   const [organizationSearch, setOrganizationSearch] = useState('');
   const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const [showOrganizationOptions, setShowOrganizationOptions] = useState(false);
+  const [assignmentLineMode, setAssignmentLineMode] = useState<'summary' | 'quantity'>('summary');
   const [issueMode, setIssueMode] = useState(false);
   const [issueComment, setIssueComment] = useState('');
   const [notice, setNotice] = useState('');
@@ -299,6 +300,7 @@ export default function UploadedDocumentsView({
     setOrganizationSearch('');
     setSelectedOrganizationId('');
     setShowOrganizationOptions(false);
+    setAssignmentLineMode(document.summary_line_items?.length ? 'summary' : 'quantity');
     setAssigningOrganization(true);
     setIssueMode(false);
     setNotice('');
@@ -440,10 +442,15 @@ export default function UploadedDocumentsView({
 
   if (assigningOrganization && selectedDocument) {
     const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
-    const assignmentLines = selectedDocument.summary_line_items?.length
+    const selectedAssignmentLines = assignmentLineMode === 'summary'
       ? selectedDocument.summary_line_items
-      : selectedDocument.line_items?.length
+      : selectedDocument.line_items;
+    const assignmentLines = selectedAssignmentLines?.length
+      ? selectedAssignmentLines
+      : assignmentLineMode === 'summary' && selectedDocument.line_items?.length
         ? selectedDocument.line_items
+        : assignmentLineMode === 'quantity' && selectedDocument.summary_line_items?.length
+          ? selectedDocument.summary_line_items
         : [{
             id: 'empty-line', unit: '—', qty: '—', price: selectedDocument.amount_without_vat || '—',
             subtotal: selectedDocument.amount_without_vat || '—', vat: selectedDocument.vat || '—',
@@ -546,17 +553,30 @@ export default function UploadedDocumentsView({
                 ))}
               </div>
 
-              <section className="flex min-h-[260px] flex-col gap-3">
-                <div className="inline-flex w-fit rounded-md bg-[#EEF4F7] p-0.5"><span className="rounded bg-white px-3 py-1.5 font-montserrat text-[11px] font-semibold text-[#007EA7] shadow-sm">Summary ({assignmentLines.length})</span></div>
-                <h2 className="border-b border-[#D3E1EC] pb-2 font-montserrat text-[12px] font-semibold text-[#10233A]">Document lines</h2>
-                <div className="grid grid-cols-[70px_90px_100px_100px_80px_80px_120px_140px_110px_110px_90px_100px_120px_120px] gap-1 px-2 font-montserrat text-[12px] font-medium text-[#7288A3]">
-                  {['Unit','Quantity','Price','Amount','VAT','VAT %','Total Amount','Product group','Department','Object','Series','Center','GL account','VAT Classifier'].map((label) => <span key={label}>{label}</span>)}
-                </div>
-                {assignmentLines.map((line) => (
-                  <div key={line.id} className="grid h-9 grid-cols-[70px_90px_100px_100px_80px_80px_120px_140px_110px_110px_90px_100px_120px_120px] items-center gap-1 rounded-lg bg-[#F8FDFF] px-2 font-montserrat text-[12px] text-[#10233A]">
-                    {[line.unit,line.qty,line.price,line.subtotal,line.vat,line.vatPct,line.total,line.productGroup || '—',line.department || '—',line.object || '—',line.series || '—',line.center || '—',line.expense || '—',line.vatClass || '—'].map((value, index) => <span key={`${line.id}-${index}`} className="truncate">{value || '—'}</span>)}
+              <section className="flex min-h-[250px] w-[1936px] flex-col gap-2 overflow-visible">
+                <div className="flex items-center justify-start gap-3">
+                  <div className="inline-flex rounded-md bg-[#EEF4F7] p-0.5">
+                    <button type="button" onClick={() => setAssignmentLineMode('summary')} className={`h-7 rounded px-3 font-montserrat text-[11px] font-semibold transition-colors ${assignmentLineMode === 'summary' ? 'bg-white text-[#007EA7] shadow-[0_1px_3px_rgba(16,35,58,0.12)]' : 'text-[#7288A3] hover:text-[#10233A]'}`}>Summary ({selectedDocument.summary_line_items?.length || 0})</button>
+                    <button type="button" onClick={() => setAssignmentLineMode('quantity')} className={`h-7 rounded px-3 font-montserrat text-[11px] font-semibold transition-colors ${assignmentLineMode === 'quantity' ? 'bg-white text-[#007EA7] shadow-[0_1px_3px_rgba(16,35,58,0.12)]' : 'text-[#7288A3] hover:text-[#10233A]'}`}>Quantity ({selectedDocument.line_items?.length || 0})</button>
                   </div>
-                ))}
+                  <button type="button" disabled aria-label="Split" className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-[#D3E1EC] bg-white text-[#D3E1EC]"><Scissors size={14} strokeWidth={1.8} /></button>
+                  <button type="button" disabled aria-label="Add line" className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-[#D3E1EC] bg-white text-[#D3E1EC]"><Plus size={14} strokeWidth={1.8} /></button>
+                </div>
+                <h2 className="border-b border-[#D3E1EC] pb-2 font-montserrat text-[12px] font-semibold text-[#10233A]">Document lines</h2>
+                <div className="flex w-[1936px] flex-col">
+                  <div className="flex flex-row items-center gap-[2px] p-[5px]">
+                    <div className="w-[18px] flex-shrink-0" />
+                    <div className="w-6 flex-shrink-0" />
+                    {[['Unit',110],['Quantity',80],['Price',90],['Amount',90],['VAT',80],['VAT %',70],['Total Amount',110],['Product group',130],['Department',100],['Object',90],['Series',80],['Center',90],['GL account',110],['VAT Classifier',110]].map(([label, width], index) => <div key={String(label)} className="flex-shrink-0 px-2 font-montserrat text-[12px] font-medium text-[#7288A3]" style={{ width: Number(width) }}>{label}{index < 7 ? <span className="ml-0.5 text-[#D64545]">*</span> : null}</div>)}
+                  </div>
+                  {assignmentLines.map((line, lineIndex) => (
+                    <div key={line.id} className={`flex flex-row items-center gap-[2px] rounded-lg p-[5px] ${lineIndex % 2 === 0 ? 'bg-[#F8FDFF]' : 'bg-white'}`}>
+                      <div className="flex w-[18px] flex-shrink-0 items-center justify-center font-montserrat text-[12px] font-medium text-[#A1B6C6]">{lineIndex + 1}</div>
+                      <div className="w-6 flex-shrink-0" />
+                      {[[line.unit,110],[line.qty,80],[line.price,90],[line.subtotal,90],[line.vat,80],[line.vatPct,70],[line.total,110],[line.productGroup,130],[line.department,100],[line.object,90],[line.series,80],[line.center,90],[line.expense,110],[line.vatClass,110]].map(([value, width], index) => <div key={`${line.id}-${index}`} className="h-[26px] flex-shrink-0 truncate px-2 py-1 font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]" style={{ width: Number(width) }}>{String(value || '—')}</div>)}
+                    </div>
+                  ))}
+                </div>
               </section>
 
               <section className="mt-auto flex w-[1936px] flex-col gap-3 pb-2">
