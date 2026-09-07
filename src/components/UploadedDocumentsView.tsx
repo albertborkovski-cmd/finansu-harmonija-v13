@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, ChevronDown, FileText, Plus, Search, X } from 'lucide-react';
-import { PageActionButton, PageHeader } from './PageHeader';
+import { PageHeader } from './PageHeader';
 import { HeaderBackButton, SystemBreadcrumb } from './SystemNavigation';
 import ColumnSortButton, { useMultiColumnSort } from './ColumnSortButton';
 import type { ColConfig } from './ColumnSettingsPanel';
@@ -130,6 +130,7 @@ export default function UploadedDocumentsView({
   const [assigningOrganization, setAssigningOrganization] = useState(false);
   const [organizationSearch, setOrganizationSearch] = useState('');
   const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
+  const [showOrganizationOptions, setShowOrganizationOptions] = useState(false);
   const [issueMode, setIssueMode] = useState(false);
   const [issueComment, setIssueComment] = useState('');
   const [notice, setNotice] = useState('');
@@ -288,6 +289,7 @@ export default function UploadedDocumentsView({
     setSelectedDocument(null);
     setOrganizationSearch('');
     setSelectedOrganizationId('');
+    setShowOrganizationOptions(false);
     window.requestAnimationFrame(() => window.scrollTo({ top: listScrollPositionRef.current }));
   };
 
@@ -296,6 +298,7 @@ export default function UploadedDocumentsView({
     setSelectedDocument(document);
     setOrganizationSearch('');
     setSelectedOrganizationId('');
+    setShowOrganizationOptions(false);
     setAssigningOrganization(true);
     setIssueMode(false);
     setNotice('');
@@ -342,6 +345,7 @@ export default function UploadedDocumentsView({
     setAssigningOrganization(false);
     setOrganizationSearch('');
     setSelectedOrganizationId('');
+    setShowOrganizationOptions(false);
     setIssueMode(false);
     setIssueComment('');
   };
@@ -436,105 +440,114 @@ export default function UploadedDocumentsView({
 
   if (assigningOrganization && selectedDocument) {
     const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
+    const assignmentLines = selectedDocument.summary_line_items?.length
+      ? selectedDocument.summary_line_items
+      : selectedDocument.line_items?.length
+        ? selectedDocument.line_items
+        : [{
+            id: 'empty-line', unit: '—', qty: '—', price: selectedDocument.amount_without_vat || '—',
+            subtotal: selectedDocument.amount_without_vat || '—', vat: selectedDocument.vat || '—',
+            vatPct: selectedDocument.vat_percent || '—', total: selectedDocument.total_amount || '—',
+            productGroup: '—', department: selectedDocument.department_code || '—',
+            object: selectedDocument.object_project || '—', series: selectedDocument.series || '—',
+            center: selectedDocument.cost_center || '—', expense: selectedDocument.expense_account || '—',
+            vatClass: selectedDocument.vat_classifier || '—', barcode: '', product: '', code: '', discount: '',
+          }];
     return (
-      <div className="relative flex min-h-full min-w-0 flex-col gap-8 bg-white px-4 py-14 sm:px-8 lg:px-[72px]">
-        <PageHeader
-          title="Assign organization"
-          leading={<HeaderBackButton onClick={returnToUploadedDocuments} label="Back to uploaded documents" />}
-          actions={(
-            <>
-              <PageActionButton onClick={returnToUploadedDocuments}>Cancel</PageActionButton>
-              <button
-                type="button"
-                disabled={!selectedOrganization}
-                onClick={() => void assignOrganization()}
-                className="flex h-8 items-center justify-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#006D91] disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]"
-              >
-                Assign organization
-              </button>
-            </>
-          )}
-        />
-        <SystemBreadcrumb items={["Uploaded documents", "Assign organization"]} />
-
-        <div className="grid min-h-[720px] overflow-hidden rounded-xl border border-[#D3E1EC] bg-white grid-cols-1 xl:grid-cols-[minmax(560px,1.45fr)_minmax(390px,0.85fr)]">
-          <section className="flex min-h-[560px] min-w-0 flex-col border-b border-[#D3E1EC] xl:min-h-0 xl:border-b-0 xl:border-r">
-            <div className="flex h-14 flex-shrink-0 items-center gap-2 border-b border-[#D3E1EC] px-5">
-              <FileText size={18} className="text-[#007EA7]" />
-              <span className="min-w-0 truncate font-montserrat text-[14px] font-semibold text-[#10233A]">{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
-            </div>
-            <div className="min-h-0 flex-1 bg-[#EEF3F7] p-4">
+      <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white">
+        <div className="flex min-h-0 flex-1 flex-row overflow-y-auto">
+          <section className="sticky left-0 top-0 flex h-screen w-[400px] flex-shrink-0 items-center justify-center border-r border-[#D3E1EC] bg-[#F8FDFF]">
+            <div className="h-full w-full">
               {selectedDocument.image_url && (selectedDocument.image_url.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|tiff?)($|\?)/i.test(selectedDocument.image_url)) ? (
-                <img src={selectedDocument.image_url} alt="Uploaded document" className="h-full w-full object-contain" />
+                <img src={selectedDocument.image_url} alt="Uploaded document" className="h-full w-full bg-white object-contain object-top" />
               ) : selectedDocument.image_url ? (
-                <object data={selectedDocument.image_url} type="application/pdf" aria-label="Uploaded document" className="h-full w-full rounded-lg bg-white">
-                  <div className="flex h-full items-center justify-center bg-white font-montserrat text-[13px] text-[#7288A3]">Document preview is unavailable.</div>
+                <object data={selectedDocument.image_url} type="application/pdf" aria-label="Uploaded document" className="h-full w-full bg-white">
+                  <div className="flex h-full items-center justify-center bg-white px-8 text-center font-montserrat text-[14px] text-[#7288A3]">PDF preview is not available in this browser.</div>
                 </object>
               ) : (
-                <article className="mx-auto min-h-full w-full max-w-[680px] bg-white px-8 py-10 shadow-sm sm:px-12">
-                  <p className="font-montserrat text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7288A3]">Uploaded document</p>
-                  <h2 className="mt-3 break-words font-montserrat text-[24px] font-semibold leading-8 text-[#10233A]">{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</h2>
-                  <div className="mt-8 border-t border-[#D3E1EC] pt-6">
-                    <p className="font-montserrat text-[12px] text-[#7288A3]">Original file preview</p>
-                    <p className="mt-2 font-montserrat text-[14px] leading-6 text-[#10233A]">The original uploaded file is shown here when a preview is available.</p>
+                <div className="flex h-full items-center justify-center">
+                  <div className="flex w-[304px] flex-col items-center gap-3 rounded-lg border-2 border-dashed border-[#D3E1EC] bg-white px-8 py-14">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F7FA]"><FileText size={28} className="text-[#007EA7]" /></div>
+                    <span className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Uploaded document</span>
+                    <span className="max-w-full truncate font-montserrat text-[13px] font-medium leading-5 text-[#7288A3]" title={selectedDocument.file_case || selectedDocument.number || selectedDocument.id}>{selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</span>
                   </div>
-                </article>
+                </div>
               )}
             </div>
           </section>
 
-          <section className="flex min-h-0 min-w-0 flex-col">
-            <div className="flex h-14 flex-shrink-0 items-center border-b-2 border-b-[#007EA7] px-6">
-              <span className="font-montserrat text-[13px] font-semibold text-[#007EA7]">EXTRACTED DATA</span>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-5 xl:p-6">
-              <h2 className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Document information</h2>
-              <dl className="mt-4 grid grid-cols-1 gap-3">
-                {[
-                  ['Document type', selectedDocument.document_type || selectedDocument.type || '—'],
-                  ['Document number', selectedDocument.number || '—'],
-                  ['Client / Counterparty', selectedDocument.client_counterparty || '—'],
-                  ['Document date', selectedDocument.document_date || '—'],
-                  ['Due / End date', selectedDocument.due_end_date || '—'],
-                  ['Operation date', selectedDocument.operation_date || '—'],
-                  ['Total amount', selectedDocument.total_amount || '—'],
-                  ['Currency', selectedDocument.currency || '—'],
-                  ['Source', sourceValue(selectedDocument)],
-                  ['Uploaded', displayUploadedDate(selectedDocument)],
-                  ['Status', uploadedStatus(selectedDocument)],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-lg bg-[#F8FDFF] px-4 py-2.5">
-                    <dt className="font-montserrat text-[11px] font-medium leading-[16px] text-[#7288A3]">{label}</dt>
-                    <dd className="mt-0.5 break-words font-montserrat text-[13px] font-normal leading-[18px] text-[#10233A]">{value}</dd>
-                  </div>
-                ))}
-              </dl>
+          <section className="min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+            <div className="flex min-h-screen w-[1560px] flex-col gap-8 p-6">
+              <header className="flex min-h-8 items-center justify-between gap-6">
+                <div className="flex min-w-0 items-center gap-2">
+                  <HeaderBackButton onClick={returnToUploadedDocuments} label="Back to uploaded documents" />
+                  <h1 className="truncate font-montserrat text-[18px] font-semibold leading-[26px] text-[#10233A]">Assign organization · {selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</h1>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <button type="button" onClick={returnToUploadedDocuments} className="flex h-8 items-center rounded-md border-2 border-[#D3E1EC] bg-white px-3 font-montserrat text-[14px] font-semibold text-[#7288A3]">Cancel</button>
+                  <button type="button" disabled={!selectedOrganization} onClick={() => void assignOrganization()} className="flex h-8 items-center rounded-md bg-[#007EA7] px-4 font-montserrat text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#D3E1EC] disabled:text-[#7288A3]">Assign organization</button>
+                </div>
+              </header>
 
-              <div className="mt-7 border-t border-[#D3E1EC] pt-6">
-                <h2 className="font-montserrat text-[16px] font-semibold leading-6 text-[#10233A]">Assign organization</h2>
-                <p className="mt-1 font-montserrat text-[11px] font-normal leading-[16px] text-[#7288A3]">Search by organization name or company code.</p>
-                <label className="relative mt-4 block">
-                  <span className="sr-only">Search organizations</span>
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7288A3]" />
-                  <input autoFocus value={organizationSearch} onChange={(event) => setOrganizationSearch(event.target.value)} placeholder="Search name or company code" className="h-10 w-full rounded-lg border border-[#D3E1EC] bg-white pl-10 pr-3 font-montserrat text-[13px] font-normal text-[#10233A] outline-none transition-colors placeholder:text-[#A1B6C6] focus:border-[#007EA7]" />
-                </label>
-                <div className="mt-3 max-h-[260px] overflow-y-auto rounded-xl border border-[#E5EDF9] p-1.5">
+              <div className="relative flex w-full flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
+                <div className="w-[250px] flex-shrink-0" onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) setShowOrganizationOptions(false);
+                }}>
+                  <label className="flex min-w-0 flex-col gap-2">
+                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Organization</span>
+                    <span className="relative">
+                      <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7288A3]" />
+                      <input value={organizationSearch} onFocus={() => setShowOrganizationOptions(true)} onChange={(event) => { setOrganizationSearch(event.target.value); setSelectedOrganizationId(''); setShowOrganizationOptions(true); }} placeholder="Search organization" className="h-8 w-full rounded-md border border-[#D3E1EC] bg-white pl-8 pr-2 font-montserrat text-[14px] font-medium text-[#10233A] outline-none focus:border-[#007EA7]" />
+                    </span>
+                  </label>
+                  {showOrganizationOptions && <div className="absolute left-4 top-[78px] z-20 max-h-[250px] w-[250px] overflow-y-auto rounded-lg border border-[#D3E1EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(16,35,58,0.14)]">
                   {assignmentOptions.length > 0 ? assignmentOptions.map((organization) => {
                     const selected = selectedOrganizationId === organization.id;
                     return (
-                      <button key={organization.id} type="button" aria-pressed={selected} onClick={() => setSelectedOrganizationId(organization.id)} className={`flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${selected ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}>
+                      <button key={organization.id} type="button" aria-pressed={selected} onClick={() => { setSelectedOrganizationId(organization.id); setOrganizationSearch(organization.name); setShowOrganizationOptions(false); }} className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left transition-colors ${selected ? 'bg-[#E7F4F9]' : 'hover:bg-[#F2F7FC]'}`}>
                         <span className="min-w-0">
                           <span className="block truncate font-montserrat text-[12px] font-medium leading-[18px] text-[#10233A]">{organization.name}</span>
                           <span className="block truncate font-montserrat text-[11px] leading-[14px] text-[#7288A3]">Company code: {organization.company_code || '—'}</span>
                         </span>
-                        <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[#007EA7] bg-[#007EA7]' : 'border-[#A1B6C6] bg-white'}`}>{selected ? <Check size={12} strokeWidth={3} className="text-white" /> : null}</span>
+                        {selected ? <Check size={15} className="flex-shrink-0 text-[#007EA7]" /> : null}
                       </button>
                     );
                   }) : (
                     <div className="flex min-h-20 items-center justify-center px-3 text-center font-montserrat text-[12px] text-[#7288A3]">No organizations found.</div>
                   )}
+                  </div>}
                 </div>
+
+                {[
+                  ['Client / Counterparty', selectedDocument.client_counterparty || '—'],
+                  ['Invoice date', selectedDocument.document_date || '—'],
+                  ['Due date', selectedDocument.due_end_date || '—'],
+                  ['Document Number', selectedDocument.number || '—'],
+                  ['Amount', selectedDocument.amount_without_vat || '—'],
+                  ['Operation date', selectedDocument.operation_date || '—'],
+                  ['Order number', selectedDocument.order_no || '—'],
+                  ['Total Amount', selectedDocument.total_amount || '—'],
+                  ['Currency', selectedDocument.currency || '—'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex w-[180px] flex-shrink-0 flex-col gap-2">
+                    <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">{label}</span>
+                    <div className="flex h-8 items-center rounded-md border border-[#D3E1EC] bg-[#F7F7F7] px-2 font-montserrat text-[14px] font-medium text-[#828588]">{value}</div>
+                  </div>
+                ))}
               </div>
+
+              <section className="flex min-h-[260px] flex-col gap-3">
+                <div className="inline-flex w-fit rounded-md bg-[#EEF4F7] p-0.5"><span className="rounded bg-white px-3 py-1.5 font-montserrat text-[11px] font-semibold text-[#007EA7] shadow-sm">Summary ({assignmentLines.length})</span></div>
+                <h2 className="border-b border-[#D3E1EC] pb-2 font-montserrat text-[12px] font-semibold text-[#10233A]">Document lines</h2>
+                <div className="grid grid-cols-[70px_90px_100px_100px_80px_80px_120px_140px_110px_110px_90px_100px_120px_120px] gap-1 px-2 font-montserrat text-[12px] font-medium text-[#7288A3]">
+                  {['Unit','Quantity','Price','Amount','VAT','VAT %','Total Amount','Product group','Department','Object','Series','Center','GL account','VAT Classifier'].map((label) => <span key={label}>{label}</span>)}
+                </div>
+                {assignmentLines.map((line) => (
+                  <div key={line.id} className="grid h-9 grid-cols-[70px_90px_100px_100px_80px_80px_120px_140px_110px_110px_90px_100px_120px_120px] items-center gap-1 rounded-lg bg-[#F8FDFF] px-2 font-montserrat text-[12px] text-[#10233A]">
+                    {[line.unit,line.qty,line.price,line.subtotal,line.vat,line.vatPct,line.total,line.productGroup || '—',line.department || '—',line.object || '—',line.series || '—',line.center || '—',line.expense || '—',line.vatClass || '—'].map((value, index) => <span key={`${line.id}-${index}`} className="truncate">{value || '—'}</span>)}
+                  </div>
+                ))}
+              </section>
             </div>
           </section>
         </div>
