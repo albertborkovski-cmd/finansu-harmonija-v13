@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Upload, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { PageHeader } from './PageHeader';
@@ -11,6 +11,7 @@ import TablePagination from './TablePagination';
 import SearchableSelect from './SearchableSelect';
 import { ResizeHandle, useColumnResize } from './useColumnResize';
 import { supabase, type Company, type DbDocument } from '../lib/supabase';
+import { loadOcrDocumentSource } from '../lib/ocrDocumentSource';
 import { getSearchSuggestions, matchesTextSearch } from '../utils/textSearch';
 import {
   matchesUploadedDateFilter,
@@ -154,14 +155,10 @@ export default function UploadedDocumentsView({
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const listScrollPositionRef = useRef(0);
 
-  const loadData = async () => {
-    setLoading(true);
-    const [documentResult, companyResult] = await Promise.all([
-      supabase.from('documents').select('*'),
-      supabase.from('companies').select('*'),
-    ]);
+  const loadData = useCallback(async () => {
+    const ocrSource = await loadOcrDocumentSource();
     const preparedDocuments = prepareUploadedDocuments(
-      (documentResult.data as unknown as DbDocument[] | null) ?? [],
+      ocrSource.documents,
     );
     await Promise.all(
       preparedDocuments.generated.map((document) =>
@@ -170,13 +167,25 @@ export default function UploadedDocumentsView({
     );
     const loadedDocuments = preparedDocuments.documents;
     setDocuments(loadedDocuments);
-    setOrganizations((companyResult.data as unknown as Company[] | null) ?? []);
+    setOrganizations(ocrSource.organizations);
+    setSelectedDocument((current) => current
+      ? loadedDocuments.find((document) => document.id === current.id) ?? current
+      : null);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     void loadData();
-  }, []);
+    const reload = () => void loadData();
+    window.addEventListener('finansu-harmonija:data-changed', reload);
+    window.addEventListener('finansu-harmonija:settings-data-changed', reload);
+    window.addEventListener('storage', reload);
+    return () => {
+      window.removeEventListener('finansu-harmonija:data-changed', reload);
+      window.removeEventListener('finansu-harmonija:settings-data-changed', reload);
+      window.removeEventListener('storage', reload);
+    };
+  }, [loadData]);
 
   useEffect(() => {
     setActiveGroup(initialGroup);

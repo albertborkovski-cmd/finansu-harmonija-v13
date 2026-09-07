@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowDownToLine, Check, FileText, Pencil, Play, Search } from "lucide-react";
 import type { Company, DbDocument } from "../lib/supabase";
-import { supabase } from "../lib/supabase";
+import { loadOcrDocumentSource } from "../lib/ocrDocumentSource";
 import { usePersistentState } from "../hooks/usePersistentState";
 import { PageActionButton, PageHeader } from "./PageHeader";
 import OcrBreadcrumb from "./OcrBreadcrumb";
@@ -325,12 +325,7 @@ export function ProcessedDocumentsTable({
   const { startResize } = useColumnResize(columns, setColumns);
 
   const loadData = useCallback(async () => {
-    const [companyResult, documentResult] = await Promise.all([
-      supabase.from("companies").select("*").order("name", { ascending: true }),
-      supabase.from("documents").select("*").order("receive_date", { ascending: false }),
-    ]);
-    const nextOrganizations = (companyResult.data ?? []) as unknown as Company[];
-    const nextDocuments = (documentResult.data ?? []) as unknown as DbDocument[];
+    const { organizations: nextOrganizations, documents: nextDocuments } = await loadOcrDocumentSource();
     setOrganizations(nextOrganizations);
     setDocuments(nextDocuments);
     setSelectedOrganizationIds((current) => {
