@@ -477,8 +477,8 @@ export default function UploadedDocumentsView({
 
   if (assigningOrganization && selectedDocument) {
     const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
-    const isPurchase = /purchase|expense|pirk/i.test(`${selectedDocument.type} ${selectedDocument.document_type}`);
-    const organizationName = selectedOrganization?.name || organizationNames.get(selectedDocument.company_id || '') || '—';
+    const purpose = (selectedDocument.document_purpose || '').trim().toLowerCase();
+    const isPurchase = purpose === 'purchase' || (purpose !== 'sale' && /purchase|expense|pirk/i.test(`${selectedDocument.type} ${selectedDocument.document_type}`));
     const counterpartyName = selectedDocument.client_counterparty === 'Organization pending identification'
       ? '—'
       : selectedDocument.client_counterparty || '—';
@@ -508,7 +508,7 @@ export default function UploadedDocumentsView({
     return (
       <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white">
         <div className="flex min-h-0 flex-1 flex-row overflow-y-auto">
-          <section className="sticky left-0 top-0 flex h-screen w-[400px] flex-shrink-0 items-center justify-center border-r border-[#D3E1EC] bg-[#F8FDFF]">
+          <section className="sticky left-0 top-0 flex h-screen w-[28%] min-w-[260px] max-w-[400px] flex-shrink-0 items-center justify-center border-r border-[#D3E1EC] bg-[#F8FDFF]">
             <div className="h-full w-full">
               {selectedDocument.image_url && (selectedDocument.image_url.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|tiff?)($|\?)/i.test(selectedDocument.image_url)) ? (
                 <img src={selectedDocument.image_url} alt="Uploaded document" className="h-full w-full bg-white object-contain object-top" />
@@ -529,7 +529,7 @@ export default function UploadedDocumentsView({
           </section>
 
           <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              <header className="flex min-h-[94px] flex-shrink-0 items-center justify-between gap-4 px-6 pb-[38px] pt-6">
+              <header className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 px-6 py-6">
                 <div className="flex min-w-0 items-center gap-2">
                   <HeaderBackButton onClick={returnToUploadedDocuments} label="Back to uploaded documents" />
                   <h1 className="truncate font-montserrat text-[18px] font-semibold leading-[26px] text-[#10233A]">Assign organization · {selectedDocument.file_case || selectedDocument.number || selectedDocument.id}</h1>
@@ -540,10 +540,10 @@ export default function UploadedDocumentsView({
                 </div>
               </header>
 
-            <div ref={tableScrollRef} className="min-h-0 flex-1 overflow-x-auto overflow-y-auto scrollbar-hide">
-            <div className="flex min-h-full w-[1984px] flex-col gap-8 px-6 pb-6">
-              <div className="flex w-[1936px] flex-row gap-4 rounded-lg border border-[#D3E1EC] p-4">
-                <div className="flex w-[216px] flex-shrink-0 flex-col gap-4">
+            <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-hide">
+            <div className="flex min-h-full w-full min-w-0 flex-col gap-6 px-6 pb-6">
+              <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-4 gap-y-4 rounded-lg border border-[#D3E1EC] p-4">
+                <div className="contents">
                   <div className="flex min-w-0 flex-col gap-2">
                     <span className="font-montserrat text-[14px] font-semibold leading-5 text-[#10233A]">Organization</span>
                     <SearchableSelect
@@ -560,8 +560,7 @@ export default function UploadedDocumentsView({
                       emptyMessage="No organizations found."
                     />
                   </div>
-                  <AssignmentField label="Seller (LT)" value={isPurchase ? counterpartyName : organizationName} grey={!isPurchase} />
-                  <AssignmentField label="Buyer (LT)" value={isPurchase ? organizationName : counterpartyName} grey={isPurchase} />
+                  <AssignmentField label={isPurchase ? 'Seller (LT)' : 'Buyer (LT)'} value={counterpartyName} grey />
                   <AssignmentField label="Counterparty code" value={counterpartyCode} grey />
                   <AssignmentField label="Accountable person" value={selectedDocument.accountable_responsible} />
                 </div>
@@ -573,7 +572,7 @@ export default function UploadedDocumentsView({
                   [['Amount', selectedDocument.amount_without_vat || '—'], ['Total Amount', selectedDocument.total_amount || '—']],
                   [['VAT', selectedDocument.vat || '—'], ['Currency', selectedDocument.currency || '—']],
                 ].map((fieldGroup, groupIndex) => (
-                  <div key={groupIndex} className="flex w-[216px] flex-shrink-0 flex-col gap-4">
+                  <div key={groupIndex} className="contents">
                     {fieldGroup.map(([label, value]) => <AssignmentField key={label} label={label} value={value} grey={['Amount', 'Total Amount', 'VAT'].includes(label)} />)}
                   </div>
                 ))}
@@ -581,7 +580,7 @@ export default function UploadedDocumentsView({
 
               </div>
 
-              <section className="flex min-h-[250px] w-[1936px] flex-col gap-2 overflow-visible">
+              <section className="flex w-full min-w-0 flex-col gap-2">
                 <div className="flex items-center justify-start gap-3">
                   <div className="inline-flex rounded-md bg-[#EEF4F7] p-0.5">
                     <button type="button" onClick={() => setAssignmentLineMode('summary')} className={`h-7 rounded px-3 font-montserrat text-[11px] font-semibold transition-colors ${assignmentLineMode === 'summary' ? 'bg-white text-[#007EA7] shadow-[0_1px_3px_rgba(16,35,58,0.12)]' : 'text-[#7288A3] hover:text-[#10233A]'}`}>Summary ({selectedDocument.summary_line_items?.length || 0})</button>
@@ -591,7 +590,8 @@ export default function UploadedDocumentsView({
                   <button type="button" disabled aria-label="Add line" className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-[#D3E1EC] bg-white text-[#D3E1EC]"><Plus size={14} strokeWidth={1.8} /></button>
                 </div>
                 <h2 className="border-b border-[#D3E1EC] pb-2 font-montserrat text-[12px] font-semibold text-[#10233A]">Document lines</h2>
-                <div className="flex w-[1936px] flex-col">
+                <div ref={tableScrollRef} className="w-full min-w-0 overflow-x-auto scrollbar-hide">
+                <div className="flex w-max min-w-full flex-col">
                   <div className="flex flex-row items-center gap-[2px] p-[5px]">
                     <div className="w-[18px] flex-shrink-0" />
                     <div className="w-6 flex-shrink-0" />
@@ -605,9 +605,11 @@ export default function UploadedDocumentsView({
                     </div>
                   ))}
                 </div>
+                </div>
+                <HorizontalTableScrollbar scrollRef={tableScrollRef} className="py-2" />
               </section>
 
-              <section aria-label="Activity history" className="flex w-[1936px] flex-col gap-4 pb-2">
+              <section aria-label="Activity history" className="flex w-full min-w-0 flex-col gap-4 overflow-x-auto pb-2">
                 <div className="flex items-center gap-3 pl-3 font-montserrat text-[12px] font-medium leading-[18px] text-[#7288A3]">
                   <span className="w-[158px] text-[#10233A]">Date</span><span className="h-5 w-px bg-[#D3E1EC]" /><span className="w-[120px]">User</span><span className="h-5 w-px bg-[#D3E1EC]" /><span className="w-[136px]">Action</span><span className="h-5 w-px bg-[#D3E1EC]" /><span>Details</span>
                 </div>
@@ -617,7 +619,6 @@ export default function UploadedDocumentsView({
               </section>
             </div>
             </div>
-            <HorizontalTableScrollbar scrollRef={tableScrollRef} className="px-6 py-2" />
           </section>
         </div>
       </div>
