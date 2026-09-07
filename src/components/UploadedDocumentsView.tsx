@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, ChevronDown, FileText, Plus, Scissors, Search, X } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { PageHeader } from './PageHeader';
 import { HeaderBackButton, SystemBreadcrumb } from './SystemNavigation';
 import ColumnSortButton, { useMultiColumnSort } from './ColumnSortButton';
@@ -355,7 +356,40 @@ export default function UploadedDocumentsView({
   const openUploadedDocument = (document: DbDocument) => {
     setSelectedDocument(null);
     setNotice('');
-    setPreviewDocument(document);
+    if (document.image_url) {
+      window.open(document.image_url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const pdf = new jsPDF();
+    const documentName = document.file_case || document.number || document.id;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    pdf.text(documentName, 20, 28);
+    pdf.setDrawColor(211, 225, 236);
+    pdf.line(20, 36, 190, 36);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(11);
+    const details = [
+      ['Document type', document.document_type || document.type || '—'],
+      ['Document number', document.number || '—'],
+      ['Client / Counterparty', document.client_counterparty || '—'],
+      ['Document date', document.document_date || '—'],
+      ['Uploaded', displayUploadedDate(document)],
+      ['Currency', document.currency || '—'],
+      ['Total amount', document.total_amount || '—'],
+      ['Source', document.source || '—'],
+      ['Source value', sourceValue(document)],
+    ];
+    details.forEach(([label, value], index) => {
+      const y = 50 + index * 14;
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(String(label), 20, y);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(String(value), 75, y);
+    });
+    const pdfUrl = pdf.output('bloburl');
+    window.open(String(pdfUrl), '_blank', 'noopener,noreferrer');
   };
 
   useEffect(() => {
